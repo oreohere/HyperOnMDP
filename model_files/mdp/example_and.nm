@@ -1,0 +1,22 @@
+// Simple example to show and part of algorithm
+mdp
+
+module try
+
+	// local state
+	s : [0..4] init 0;
+
+	[a] s=0 -> 1 : (s'=1);
+        [b] s=0 -> 0.2 : (s'=2) + 0.8 : (s'=0);
+	// [] s=1 -> 1 : (s'=1);
+	[c] s=1 -> 1 : (s'=3);
+	    [d] s=1 -> 1 : (s'=4);
+	[] s=2 -> 1 : (s'=2);
+	[] s=3 -> 1 :(s'=3);
+	[] s=4 -> 1 :(s'=4);
+
+endmodule
+
+
+label "one" = s=1 | s=4;
+label "two" = s=2 | s=4;
