@@ -1,3 +1,4 @@
+import itertools
 import sys
 
 import stormpy
@@ -89,23 +90,60 @@ def Semantics(model, formula_duplicate, n):
     return E
 
 
-def Truth(model, formula_initial):
+def Truth(model, formula_initial, n):
     list_of_states = []
+    list_of_AV = []  # will have the or, and according to the quantifier in that index in the formula
     for state in model.states:
         list_of_states.append(state.id)
-
-    return B
+    combined_list_of_states = list(itertools.product(list_of_states, repeat=n))
+    while type(formula_initial.children[0]) == Token:
+        if formula_initial.data in ['exist_scheduler', 'forall_scheduler']:
+            formula_initial = formula_initial.children[1]
+        elif formula_initial.data == 'exist':
+            list_of_AV.append('Or')
+            formula_initial = formula_initial.children[1]
+        elif formula_initial.data == 'forall':
+            list_of_AV.append('And')
+            formula_initial = formula_initial.children[1]
+    index_of_phi = list_of_subformula.index(formula_initial)
+    result_string = ""
+    if n == 2:
+        if list_of_AV[0] == 'V':
+            result_string += ' V('
+        else:
+            result_string += ' A('
+        first = True
+        for i in range(len(combined_list_of_states)):
+            if first or combined_list_of_states[i-1][0] == combined_list_of_states[i][0] - 1:
+                if list_of_AV[1] == 'V':
+                    result_string += "V(" + "holds_" + str(combined_list_of_states[i][0]) + "_" + str(combined_list_of_states[i][1]) + "_" + str(index_of_phi) + " ,"
+                else:
+                    result_string += "A(" + "holds_" + str(combined_list_of_states[i][0]) + "_" + str(combined_list_of_states[i][1]) + "_" + str(index_of_phi) + " ,"
+                first = False
+            elif ((i+1) == len(combined_list_of_states)) or combined_list_of_states[i][0] == combined_list_of_states[i+1][0] - 1:
+                if list_of_AV[1] == 'V':
+                    result_string += "holds_" + str(combined_list_of_states[i][0]) + "_" + str(combined_list_of_states[i][1]) + "_" + str(index_of_phi) + ")"
+                else:
+                    result_string += "holds_" + str(combined_list_of_states[i][0]) + "_" + str(combined_list_of_states[i][1]) + "_" + str(index_of_phi) + ")"
+            else:
+                if list_of_AV[1] == 'V':
+                    result_string += "holds_" + str(combined_list_of_states[i][0]) + "_" + str(combined_list_of_states[i][1]) + "_" + str(index_of_phi) + " ,"
+                else:
+                    result_string += "holds_" + str(combined_list_of_states[i][0]) + "_" + str(combined_list_of_states[i][1]) + "_" + str(index_of_phi) + " ,"
+        result_string += ')'
+    return result_string
 
 
 def check(F):  # this will take the string F, convert it to z3 compatible equation and return the result of smt checking
     pass
 
 
-def add_to_subformula_list(formula_phi):       # add as you go any new subformula part as needed
+def add_to_subformula_list(formula_phi):  # add as you go any new subformula part as needed
     if formula_phi.data in ['exist_scheduler', 'forall_scheduler', 'exist', 'forall']:
         formula_phi = formula_phi.children[1]
         add_to_subformula_list(formula_phi)
-    elif formula_phi.data in ['and_op', 'or_op', 'less_prob', 'greater_prob', 'equal_prob', 'greatereq_prob', 'lesseq_prob', 'add_prob', 'minus_prob', 'mul_prob', 'calc_until_unbounded']:
+    elif formula_phi.data in ['and_op', 'or_op', 'less_prob', 'greater_prob', 'equal_prob', 'greatereq_prob', 'lesseq_prob', 'add_prob', 'minus_prob', 'mul_prob',
+                              'calc_until_unbounded']:
         list_of_subformula.append(formula_phi)
         left_child = formula_phi.children[0]
         add_to_subformula_list(left_child)
@@ -119,28 +157,30 @@ def add_to_subformula_list(formula_phi):       # add as you go any new subformul
         list_of_subformula.append(formula_phi)
 
 
-
 def main_smt_encoding(model, formula_initial, formula):
     F = ""
     sa = ""
     first_i = True
     first_o = True
+    F = 'A('
     for state in model.states:
         act = ""
         first_i = True
+        sa = 'V('
         for action in state.actions:
-            act = "(a" + str(state.id) + " = " + str(action.id) + ")"  # a1 means action for state 1
+            act = "a" + str(state.id) + " = " + str(action.id)   # a1 means action for state 1
             if first_i:
-                sa = act
+                sa += act
                 first_i = False
             else:
-                sa += " V " + act
+                sa += ', ' + act
+        sa += ')'
         if first_o:
-            F = "( " + sa + " )"
+            F += sa
             first_o = False
         else:
-            sa = "( " + sa + " )"
-            F += " A " + sa
+            F += ", " + sa
+    F += ')'
     add_to_subformula_list(formula_initial)
 
     formula_duplicate = formula_initial
@@ -155,8 +195,8 @@ def main_smt_encoding(model, formula_initial, formula):
     semantics_result = Semantics(model, formula_duplicate, n)
 
     if formula_initial.data == 'exist_scheduler':
-        truth_result = Truth(model, formula_initial)
-        F = F + "A (" + semantics_result + ") A (" + truth_result + ")"
+        truth_result = Truth(model, formula_initial, n)
+        F = "A(" + F + "," + semantics_result + "," + truth_result + ")"
         if check(F):
             return True
         else:
@@ -199,7 +239,7 @@ if __name__ == '__main__':
     initial_prism_program = stormpy.parse_prism_program(path)
     initial_model = stormpy.build_model(initial_prism_program)
 
-    #try_z3()
+    # try_z3()
 
     parser = Lark(turtle_grammar)
     formula = sys.argv[2]
