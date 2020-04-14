@@ -48,7 +48,7 @@ turtle_grammar = """
 """
 parser = None
 list_of_subformula = []
-Expression_Table = []
+list_of_z3_variables = []
 
 
 def example_schedulers_01():
@@ -86,6 +86,16 @@ def try_z3():
     print("Hi")
 
 
+def SemanticsUnboundedUntil(model, formula_duplicate, combined_list_of_states, n):
+    result_string = ''
+    return result_string
+
+
+def SemanticsBoundedUntil(model, formula_duplicate, combined_list_of_states, n):
+    result_string = ''
+    return result_string
+
+
 def Semantics(model, formula_duplicate, combined_list_of_states, n):
     result_string = ''
     if formula_duplicate.data == 'true':
@@ -95,24 +105,69 @@ def Semantics(model, formula_duplicate, combined_list_of_states, n):
         for i in range(len(combined_list_of_states)):
             if first:
                 result_string += "holds_" + str(combined_list_of_states[i][0]) + "_" + str(combined_list_of_states[i][1]) + "_" + str(index_of_phi)
+                if "holds_" + str(combined_list_of_states[i][0]) + "_" + str(combined_list_of_states[i][1]) + "_" + str(index_of_phi) not in list_of_z3_variables:
+                    list_of_z3_variables.append("holds_" + str(combined_list_of_states[i][0]) + "_" + str(combined_list_of_states[i][1]) + "_" + str(index_of_phi))
                 first = False
             else:
                 result_string += ",holds_" + str(combined_list_of_states[i][0]) + "_" + str(combined_list_of_states[i][1]) + "_" + str(index_of_phi)
+                if "holds_" + str(combined_list_of_states[i][0]) + "_" + str(combined_list_of_states[i][1]) + "_" + str(index_of_phi) not in list_of_z3_variables:
+                    list_of_z3_variables.append("holds_" + str(combined_list_of_states[i][0]) + "_" + str(combined_list_of_states[i][1]) + "_" + str(index_of_phi))
         result_string += ')'
     elif formula_duplicate.data == 'var':
         list_of_state_with_ap = []
         ap_name = formula_duplicate.children[0].children[0].value
         ap_state = formula_duplicate.children[0].children[1].value[1]
         labeling = model.labeling
-
+        and_for_yes = 'A('
+        and_for_no = 'A('
+        index_of_phi = list_of_subformula.index(formula_duplicate)
         for state in model.states:
             if ap_name in labeling.get_labels_of_state(state.id):
                 list_of_state_with_ap.append(state.id)
         for li in combined_list_of_states:
-
+            if li[int(ap_state)-1] in list_of_state_with_ap:
+                and_for_yes += 'holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi) + ' '
+                if 'holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi) not in list_of_z3_variables:
+                    list_of_z3_variables.append('holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi))
+            else:
+                and_for_no += 'Not(holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi) + ') '
+                if 'holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi) not in list_of_z3_variables:
+                    list_of_z3_variables.append('holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi))
+        and_for_yes += ')'
+        and_for_no += ')'
+        result_string = 'A(' + and_for_yes + and_for_no + ')'
     elif formula_duplicate.data == 'and_op':
         result_string = 'A(' + Semantics(model, formula_duplicate.children[0], combined_list_of_states, n) + Semantics(model, formula_duplicate.children[1], combined_list_of_states, n) + ')'
-
+        sum_of_loop = 'A('
+        index_phi = list_of_subformula.index(formula_duplicate)
+        index_phi1 = list_of_subformula.index(formula_duplicate.children[0])
+        index_phi2 = list_of_subformula.index(formula_duplicate.children[1])
+        for li in combined_list_of_states:
+            first_ands = "A(holds_" + str(li[0]) + '_' + str(li[1]) + '_' + str(index_phi) + ' ' + 'holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_phi1) + ' ' + 'holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_phi2) + ')'
+            if "holds_" + str(li[0]) + '_' + str(li[1]) + '_' + str(index_phi) not in list_of_z3_variables:
+                list_of_z3_variables.append("holds_" + str(li[0]) + '_' + str(li[1]) + '_' + str(index_phi))
+            if "holds_" + str(li[0]) + '_' + str(li[1]) + '_' + str(index_phi1) not in list_of_z3_variables:
+                list_of_z3_variables.append("holds_" + str(li[0]) + '_' + str(li[1]) + '_' + str(index_phi1))
+            if "holds_" + str(li[0]) + '_' + str(li[1]) + '_' + str(index_phi2) not in list_of_z3_variables:
+                list_of_z3_variables.append("holds_" + str(li[0]) + '_' + str(li[1]) + '_' + str(index_phi2))
+            second_mix = "A(Not(holds_" + str(li[0]) + '_' + str(li[1]) + '_' + str(index_phi) + ') ' + 'Or(Not(holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_phi1) + ') ' + 'Not(holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_phi2) + ')))'
+            sum_of_loop += 'Or(' + first_ands + " " + second_mix + ') '
+        sum_of_loop += ')'
+        result_string = 'A(' + result_string + ' ' + sum_of_loop + ') '
+    elif formula_duplicate.data == 'neg_op':
+        pass
+    elif formula_duplicate.data == 'less_prob':
+        pass
+    elif formula_duplicate.data == 'calc_next':
+        pass
+    elif formula_duplicate.data == 'calc_until_unbounded':
+        result_string = SemanticsUnboundedUntil(model, formula_duplicate, combined_list_of_states, n)
+    elif formula_duplicate.data == 'calc_until_bounded':
+        result_string = SemanticsBoundedUntil(model, formula_duplicate, combined_list_of_states, n)
+    elif formula_duplicate.data == 'const':
+        pass
+    elif formula_duplicate.data in ['add_prob', 'minus_prob', 'mul_prob']:
+        pass
 
     return result_string
 
@@ -141,19 +196,31 @@ def Truth(model, formula_initial, combined_list_of_states, n):
             if first or combined_list_of_states[i-1][0] == combined_list_of_states[i][0] - 1:
                 if list_of_AV[1] == 'V':
                     result_string += "V(" + "holds_" + str(combined_list_of_states[i][0]) + "_" + str(combined_list_of_states[i][1]) + "_" + str(index_of_phi) + " ,"
+                    if "holds_" + str(combined_list_of_states[i][0]) + "_" + str(combined_list_of_states[i][1]) + "_" + str(index_of_phi) not in list_of_z3_variables:
+                        list_of_z3_variables.append("holds_" + str(combined_list_of_states[i][0]) + "_" + str(combined_list_of_states[i][1]) + "_" + str(index_of_phi))
                 else:
                     result_string += "A(" + "holds_" + str(combined_list_of_states[i][0]) + "_" + str(combined_list_of_states[i][1]) + "_" + str(index_of_phi) + " ,"
+                    if "holds_" + str(combined_list_of_states[i][0]) + "_" + str(combined_list_of_states[i][1]) + "_" + str(index_of_phi) not in list_of_z3_variables:
+                        list_of_z3_variables.append("holds_" + str(combined_list_of_states[i][0]) + "_" + str(combined_list_of_states[i][1]) + "_" + str(index_of_phi))
                 first = False
             elif ((i+1) == len(combined_list_of_states)) or combined_list_of_states[i][0] == combined_list_of_states[i+1][0] - 1:
                 if list_of_AV[1] == 'V':
                     result_string += "holds_" + str(combined_list_of_states[i][0]) + "_" + str(combined_list_of_states[i][1]) + "_" + str(index_of_phi) + ")"
+                    if "holds_" + str(combined_list_of_states[i][0]) + "_" + str(combined_list_of_states[i][1]) + "_" + str(index_of_phi) not in list_of_z3_variables:
+                        list_of_z3_variables.append("holds_" + str(combined_list_of_states[i][0]) + "_" + str(combined_list_of_states[i][1]) + "_" + str(index_of_phi))
                 else:
                     result_string += "holds_" + str(combined_list_of_states[i][0]) + "_" + str(combined_list_of_states[i][1]) + "_" + str(index_of_phi) + ")"
+                    if "holds_" + str(combined_list_of_states[i][0]) + "_" + str(combined_list_of_states[i][1]) + "_" + str(index_of_phi) not in list_of_z3_variables:
+                        list_of_z3_variables.append("holds_" + str(combined_list_of_states[i][0]) + "_" + str(combined_list_of_states[i][1]) + "_" + str(index_of_phi))
             else:
                 if list_of_AV[1] == 'V':
                     result_string += "holds_" + str(combined_list_of_states[i][0]) + "_" + str(combined_list_of_states[i][1]) + "_" + str(index_of_phi) + " ,"
+                    if "holds_" + str(combined_list_of_states[i][0]) + "_" + str(combined_list_of_states[i][1]) + "_" + str(index_of_phi) not in list_of_z3_variables:
+                        list_of_z3_variables.append("holds_" + str(combined_list_of_states[i][0]) + "_" + str(combined_list_of_states[i][1]) + "_" + str(index_of_phi))
                 else:
                     result_string += "holds_" + str(combined_list_of_states[i][0]) + "_" + str(combined_list_of_states[i][1]) + "_" + str(index_of_phi) + " ,"
+                    if "holds_" + str(combined_list_of_states[i][0]) + "_" + str(combined_list_of_states[i][1]) + "_" + str(index_of_phi) not in list_of_z3_variables:
+                        list_of_z3_variables.append("holds_" + str(combined_list_of_states[i][0]) + "_" + str(combined_list_of_states[i][1]) + "_" + str(index_of_phi))
         result_string += ')'
     return result_string
 
