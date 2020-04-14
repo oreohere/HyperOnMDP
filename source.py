@@ -48,6 +48,7 @@ turtle_grammar = """
 """
 parser = None
 list_of_subformula = []
+Expression_Table = []
 
 
 def example_schedulers_01():
@@ -78,24 +79,47 @@ def try_z3():
     z = Bool('z')
     z1 = Bool('z1')
     s = Solver()
-    s.add(And(Or(x1 == 1, x1 == 3), z == True, z1 == False, And(z, z1)))
+    s.add(And(Or(x1 == 1, x1 == 3), Not(z), z1 == True, And(z, z1)))
     s.add(y == 2)
     s.add(x1 + y == 5)
     t = s.check()
     print("Hi")
 
 
-def Semantics(model, formula_duplicate, n):
-    E = ""
-    return E
+def Semantics(model, formula_duplicate, combined_list_of_states, n):
+    result_string = ''
+    if formula_duplicate.data == 'true':
+        result_string += 'A('
+        first = True
+        index_of_phi = list_of_subformula.index(formula_duplicate)
+        for i in range(len(combined_list_of_states)):
+            if first:
+                result_string += "holds_" + str(combined_list_of_states[i][0]) + "_" + str(combined_list_of_states[i][1]) + "_" + str(index_of_phi)
+                first = False
+            else:
+                result_string += ",holds_" + str(combined_list_of_states[i][0]) + "_" + str(combined_list_of_states[i][1]) + "_" + str(index_of_phi)
+        result_string += ')'
+    elif formula_duplicate.data == 'var':
+        list_of_state_with_ap = []
+        ap_name = formula_duplicate.children[0].children[0].value
+        ap_state = formula_duplicate.children[0].children[1].value[1]
+        labeling = model.labeling
+
+        for state in model.states:
+            if ap_name in labeling.get_labels_of_state(state.id):
+                list_of_state_with_ap.append(state.id)
+        for li in combined_list_of_states:
+
+    elif formula_duplicate.data == 'and_op':
+        result_string = 'A(' + Semantics(model, formula_duplicate.children[0], combined_list_of_states, n) + Semantics(model, formula_duplicate.children[1], combined_list_of_states, n) + ')'
 
 
-def Truth(model, formula_initial, n):
-    list_of_states = []
-    list_of_AV = []  # will have the or, and according to the quantifier in that index in the formula
-    for state in model.states:
-        list_of_states.append(state.id)
-    combined_list_of_states = list(itertools.product(list_of_states, repeat=n))
+    return result_string
+
+
+def Truth(model, formula_initial, combined_list_of_states, n):
+    list_of_AV = []  # will have the OR,AND according to the quantifier in that index in the formula
+
     while type(formula_initial.children[0]) == Token:
         if formula_initial.data in ['exist_scheduler', 'forall_scheduler']:
             formula_initial = formula_initial.children[1]
@@ -162,7 +186,9 @@ def main_smt_encoding(model, formula_initial, formula):
     sa = ""
     first_i = True
     first_o = True
+    list_of_states = []
     F = 'A('
+
     for state in model.states:
         act = ""
         first_i = True
@@ -185,17 +211,20 @@ def main_smt_encoding(model, formula_initial, formula):
 
     formula_duplicate = formula_initial
     n = 0
-    while type(formula_duplicate.children[0]) == Token:
+    while len(formula_duplicate.children) > 0 and type(formula_duplicate.children[0]) == Token:
         if formula_duplicate.data in ['exist_scheduler', 'forall_scheduler']:
             formula_duplicate = formula_duplicate.children[1]
         elif formula_duplicate.data in ['exist', 'forall']:
             n += 1
             formula_duplicate = formula_duplicate.children[1]
+    for state in model.states:
+        list_of_states.append(state.id)
+    combined_list_of_states = list(itertools.product(list_of_states, repeat=n))
 
-    semantics_result = Semantics(model, formula_duplicate, n)
+    semantics_result = Semantics(model, formula_duplicate,combined_list_of_states, n)
 
     if formula_initial.data == 'exist_scheduler':
-        truth_result = Truth(model, formula_initial, n)
+        truth_result = Truth(model, formula_initial, combined_list_of_states, n)
         F = "A(" + F + "," + semantics_result + "," + truth_result + ")"
         if check(F):
             return True
@@ -223,7 +252,7 @@ def main_smt_encoding(model, formula_initial, formula):
                 new_formula += formula[i]
                 i += 1
         new_parsed_formula = parser.parse(new_formula)
-        truth_result = Truth(model, new_parsed_formula, n)
+        truth_result = Truth(model, new_parsed_formula, combined_list_of_states, n)
         F = F + "A (" + semantics_result + ") A (" + truth_result + ")"
         if check(F):
             return False
@@ -239,7 +268,7 @@ if __name__ == '__main__':
     initial_prism_program = stormpy.parse_prism_program(path)
     initial_model = stormpy.build_model(initial_prism_program)
 
-    # try_z3()
+    #try_z3()
 
     parser = Lark(turtle_grammar)
     formula = sys.argv[2]
