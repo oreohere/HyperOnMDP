@@ -79,7 +79,7 @@ def try_z3():
     z = Bool('z')
     z1 = Bool('z1')
     s = Solver()
-    s.add(And(Or(x1 == 1, x1 == 3), Not(z), z1 == True, And(z, z1)))
+    s.add(And(Or(x1 == 1, x1 == 3), Not(z), z1 == True, And(z, z1),  ))
     s.add(y == 2)
     s.add(x1 + y == 5)
     t = s.check()
@@ -150,14 +150,33 @@ def Semantics(model, formula_duplicate, combined_list_of_states, n):
                 list_of_z3_variables.append("holds_" + str(li[0]) + '_' + str(li[1]) + '_' + str(index_phi1))
             if "holds_" + str(li[0]) + '_' + str(li[1]) + '_' + str(index_phi2) not in list_of_z3_variables:
                 list_of_z3_variables.append("holds_" + str(li[0]) + '_' + str(li[1]) + '_' + str(index_phi2))
-            second_mix = "A(Not(holds_" + str(li[0]) + '_' + str(li[1]) + '_' + str(index_phi) + ') ' + 'Or(Not(holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_phi1) + ') ' + 'Not(holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_phi2) + ')))'
-            sum_of_loop += 'Or(' + first_ands + " " + second_mix + ') '
+            second_mix = "A(Not(holds_" + str(li[0]) + '_' + str(li[1]) + '_' + str(index_phi) + ') ' + 'V(Not(holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_phi1) + ') ' + 'Not(holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_phi2) + ')))'
+            sum_of_loop += 'V(' + first_ands + " " + second_mix + ') '
         sum_of_loop += ')'
         result_string = 'A(' + result_string + ' ' + sum_of_loop + ') '
     elif formula_duplicate.data == 'neg_op':
-        pass
+        sem = Semantics(model, formula_duplicate.children[0], combined_list_of_states, n)
+        index_phi = list_of_subformula.index(formula_duplicate)
+        index_phi1 = list_of_subformula.index(formula_duplicate.children[0])
+        result_string = 'A(' + sem + 'A('
+        for li in combined_list_of_states:
+            result_string += 'Xor(' + 'holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_phi) + ', ' + 'holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_phi1) + ') '
+            if 'holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_phi) not in list_of_z3_variables:
+                list_of_z3_variables.append('holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_phi))
+            if 'holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_phi1) not in list_of_z3_variables:
+                list_of_z3_variables.append('holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_phi1))
+        result_string += '))'
     elif formula_duplicate.data == 'less_prob':
-        pass
+        result_string = 'A(' + Semantics(model, formula_duplicate.children[0], combined_list_of_states, n) + Semantics(model, formula_duplicate.children[1], combined_list_of_states, n) + ')'
+        index_phi = list_of_subformula.index(formula_duplicate)
+        index_phi1 = list_of_subformula.index(formula_duplicate.children[0])
+        index_phi2 = list_of_subformula.index(formula_duplicate.children[1])
+        result_string = 'A(' + result_string + ' A('
+        for li in combined_list_of_states:
+            and_less = 'A(holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_phi) + ', prob_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_phi1) + ' < prob_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_phi2) + ')'
+            and_great = 'A(Not(holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_phi) + '), prob_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_phi1) + ' >= prob_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_phi2) + ')'
+            result_string += 'V(' + and_less + ', ' + and_great + ')'
+        result_string += '))'
     elif formula_duplicate.data == 'calc_next':
         pass
     elif formula_duplicate.data == 'calc_until_unbounded':
@@ -165,7 +184,18 @@ def Semantics(model, formula_duplicate, combined_list_of_states, n):
     elif formula_duplicate.data == 'calc_until_bounded':
         result_string = SemanticsBoundedUntil(model, formula_duplicate, combined_list_of_states, n)
     elif formula_duplicate.data == 'const':
-        pass
+        c = formula_duplicate.children[0].value
+        result_string = 'A('
+        first = True
+        for li in combined_list_of_states:
+            if first:
+                result_string += 'prob_' + str(li[0]) + '_' + str(li[1]) + '_' + str(list_of_subformula.index(formula_duplicate)) + ' = ' + c
+                first = False
+            else:
+                result_string += ', prob_' + str(li[0]) + '_' + str(li[1]) + '_' + str(list_of_subformula.index(formula_duplicate)) + ' = ' + c
+            if ('prob_' + str(li[0]) + '_' + str(li[1]) + '_' + str(list_of_subformula.index(formula_duplicate))) not in list_of_z3_variables:
+                list_of_z3_variables.append('prob_' + str(li[0]) + '_' + str(li[1]) + '_' + str(list_of_subformula.index(formula_duplicate)))
+        result_string += ')'
     elif formula_duplicate.data in ['add_prob', 'minus_prob', 'mul_prob']:
         pass
 
@@ -244,7 +274,7 @@ def add_to_subformula_list(formula_phi):  # add as you go any new subformula par
         list_of_subformula.append(formula_phi)
     elif formula_phi.data in ['neg_op']:
         list_of_subformula.append(formula_phi)
-        formula_phi = formula_phi.children[1]
+        formula_phi = formula_phi.children[0]
         list_of_subformula.append(formula_phi)
 
 
@@ -343,3 +373,5 @@ if __name__ == '__main__':
     result = main_smt_encoding(initial_model, parsed_formula_initial, formula)
 
 # mdp_example_and "ES sh . E s1 . E s2 . ( one(s1) & two(s2) )" s1 and s2 are dtmcs extended by using scheduler sh on the mdp example_and.nm
+# mdp_example_neg_const "ES sh . E s1 . E s2 . (P(X ( one(s1) & two(s2) ) > 3)"
+# mdp_example_neg_const "ES sh . E s1 . E s2 . ~one(s1)"
