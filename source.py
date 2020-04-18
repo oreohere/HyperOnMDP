@@ -96,13 +96,14 @@ def SemanticsUnboundedUntil(model, formula_duplicate, combined_list_of_states, n
     result_string = 'A(' + result_string + ' '
     sum_of_loop1 = 'A('
     sum_of_loop2 = 'A('
+    index_of_phi = list_of_subformula.index(formula_duplicate)
     for li in combined_list_of_states:
-        first_and1 = "A(prob_" + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi1) + '=1' + ', holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi1) + ')'
-        second_and1 = "A(prob_" + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi1) + '=0' + ', Not(holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi1) + '))'
-        final_or1 = 'Or(' + first_and1 + ' ' + second_and1
+        first_and1 = "A(prob_" + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi1) + '=1' + ' holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi1) + ')'
+        second_and1 = "A(prob_" + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi1) + '=0' + ' N(holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi1) + '))'
+        final_or1 = 'Or(' + first_and1 + ' ' + second_and1 + ')'
         sum_of_loop1 += final_or1 + ' '
-        first_and2 = "A(prob_" + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi2) + '=1' + ', holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi2) + ')'
-        second_and2 = "A(prob_" + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi2) + '=0' + ', Not(holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi2) + '))'
+        first_and2 = "A(prob_" + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi2) + '=1' + ' holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi2) + ')'
+        second_and2 = "A(prob_" + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi2) + '=0' + ' N(holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi2) + '))'
         final_or2 = 'Or(' + first_and2 + ' ' + second_and2 + ')'
         sum_of_loop2 += final_or2 + ' '
         if "prob_" + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi1) not in list_of_z3_variables:
@@ -113,8 +114,8 @@ def SemanticsUnboundedUntil(model, formula_duplicate, combined_list_of_states, n
             list_of_z3_variables.append("prob_" + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi2))
         if 'holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi2) not in list_of_z3_variables:
             list_of_z3_variables.append('holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi2))
-    sum_of_loop1 += ')'
-    sum_of_loop2 += ')'
+    sum_of_loop1 = sum_of_loop1[0:len(sum_of_loop1) - 1] + ')'
+    sum_of_loop2 = sum_of_loop2[0:len(sum_of_loop2) - 1] + ')'
     result_string += sum_of_loop1 + ')'
     result_string = 'A(' + result_string + ' ' + sum_of_loop2 + ')'
 
@@ -130,59 +131,56 @@ def SemanticsUnboundedUntil(model, formula_duplicate, combined_list_of_states, n
                 list_of_tran.append(tran.value())
             dict_of_acts_tran[str(state.id) + ' ' + str(action.id)] = list_of_tran
         dict_of_acts[state.id] = list_of_act
-    result_string = 'A(' + result_string + ' '
+    # result_string = 'A(' + result_string + ' '
 
     for li in combined_list_of_states:
         result_string = 'A(' + result_string + ' '
-        first_implies = 'Implies(holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi2) + ' ' + 'prob_' + str(li[0]) + '_' + str(li[1]) + '_' + str(
-            list_of_subformula.index(formula_duplicate)) + '=1)'
-        if 'prob_' + str(li[0]) + '_' + str(li[1]) + '_' + str(list_of_subformula.index(formula_duplicate)) not in list_of_z3_variables:
-            list_of_z3_variables.append('prob_' + str(li[0]) + '_' + str(li[1]) + '_' + str(list_of_subformula.index(formula_duplicate)))
-        second_implies = 'Implies(A(Not(holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi1) + ') Not(holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(
-            index_of_phi2) + ')) ' + 'prob_' + str(li[0]) + '_' + str(li[1]) + '_' + str(list_of_subformula.index(formula_duplicate)) + '=0)'
-        result_string += first_implies + ' ' + second_implies
+        first_implies = 'I(holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi2) + ' ' + 'prob_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi) + '=1)'
+        if 'prob_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi) not in list_of_z3_variables:
+            list_of_z3_variables.append('prob_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi))
+        second_implies = 'I(A(N(holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi1) + ') N(holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(
+            index_of_phi2) + ')) ' + 'prob_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi) + '=0)'
+        result_string += first_implies + ' ' + second_implies + ')'
         combined_acts = list(itertools.product(dict_of_acts[li[0]], dict_of_acts[li[1]]))
         for ca in combined_acts:
-            implies_precedent = 'A(holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi1) + ' Not(holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(
-                index_of_phi2) + ') A(a_' + str(combined_list_of_states.index(li)) + '_' + str(0) + ' = ' + str(ca[0]) + ', a_' + str(
-                combined_list_of_states.index(li)) + '_' + str(1) + ' = ' + str(ca[1]) + '))'
-            if 'a_' + str(combined_list_of_states.index(li)) + '_' + str(0) not in list_of_z3_variables:
-                list_of_z3_variables.append('a_' + str(combined_list_of_states.index(li)) + '_' + str(0))
-            if 'a_' + str(combined_list_of_states.index(li)) + '_' + str(1) not in list_of_z3_variables:
-                list_of_z3_variables.append('a_' + str(combined_list_of_states.index(li)) + '_' + str(1))
+            implies_precedent = 'A(holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi1) + ' N(holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(
+                index_of_phi2) + ') A(a_s' + str(combined_list_of_states.index(li)) + '_' + str(0) + '=' + str(ca[0]) + ' a_s' + str(
+                combined_list_of_states.index(li)) + '_' + str(1) + '=' + str(ca[1]) + '))'
+            if 'a_s' + str(combined_list_of_states.index(li)) + '_' + str(0) not in list_of_z3_variables:
+                list_of_z3_variables.append('a_s' + str(combined_list_of_states.index(li)) + '_' + str(0))
+            if 'a_s' + str(combined_list_of_states.index(li)) + '_' + str(1) not in list_of_z3_variables:
+                list_of_z3_variables.append('a_s' + str(combined_list_of_states.index(li)) + '_' + str(1))
 
-            mul_clause = 'prob_' + str(li[0]) + '_' + str(li[1]) + '_' + str(list_of_subformula.index(formula_duplicate)) + ' = A('
-            if 'prob_' + str(li[0]) + '_' + str(li[1]) + '_' + str(list_of_subformula.index(formula_duplicate)) not in list_of_z3_variables:
-                list_of_z3_variables.append('prob_' + str(li[0]) + '_' + str(li[1]) + '_' + str(list_of_subformula.index(formula_duplicate)))
+            mul_clause = 'prob_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi) + '=A('
+            if 'prob_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi) not in list_of_z3_variables:
+                list_of_z3_variables.append('prob_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi))
             combined_succ = list(itertools.product(dict_of_acts_tran[str(li[0]) + " " + str(ca[0])], dict_of_acts_tran[str(li[1]) + " " + str(ca[1])]))
             first = True
             prod_left = ''
             for cs in combined_succ:
                 if first:
-                    prod_left = '(' + str(cs[0]) + ' * ' + str(cs[1]) + ' * ' + 'prob_s' + str(combined_succ.index(cs)) + '_' + str(
-                        list_of_subformula.index(formula_duplicate)) + ')'
+                    prod_left = '(' + str(cs[0]) + '*' + str(cs[1]) + '*' + 'prob_s' + str(combined_succ.index(cs)) + '_' + str(index_of_phi) + ')'
                     first = False
                 else:
-                    prod_left += '+ (' + str(cs[0]) + ' * ' + str(cs[1]) + ' * ' + 'prob_s' + str(combined_succ.index(cs)) + '_' + str(
-                        list_of_subformula.index(formula_duplicate)) + ')'
-                if 'prob_s' + str(combined_succ.index(cs)) + '_' + str(list_of_subformula.index(formula_duplicate)) not in list_of_z3_variables:
-                    list_of_z3_variables.append('prob_s' + str(combined_succ.index(cs)) + '_' + str(list_of_subformula.index(formula_duplicate)))
-            mul_clause += prod_left + ', '
-            prod_right = 'Implies((prob_' + str(combined_list_of_states.index(li)) + '_' + str(list_of_subformula.index(formula_duplicate)) + ' > 0) '
+                    prod_left += '+(' + str(cs[0]) + '*' + str(cs[1]) + '*' + 'prob_s' + str(combined_succ.index(cs)) + '_' + str(index_of_phi) + ')'
+                if 'prob_s' + str(combined_succ.index(cs)) + '_' + str(index_of_phi) not in list_of_z3_variables:
+                    list_of_z3_variables.append('prob_s' + str(combined_succ.index(cs)) + '_' + str(index_of_phi))
+            mul_clause += '(' + prod_left + ') '
+            prod_right = 'I(prob_' + str(combined_list_of_states.index(li)) + '_' + str(index_of_phi) + '>0 '
             prod_right_or = 'Or('
             for cs in combined_succ:
-                prod_right_or += 'Or(holds_s' + str(combined_succ.index(cs)) + '_' + str(list_of_subformula.index(phi2)) + ' (d_' + str(li[0]) + '_' + str(li[1]) + '_' + str(
-                    index_of_phi2) + ' > d_s' + str(combined_succ.index(cs)) + '_' + str(list_of_subformula.index(phi2)) + ')) '
-                if 'holds_s' + str(combined_succ.index(cs)) + '_' + str(list_of_subformula.index(phi2)) not in list_of_z3_variables:
-                    list_of_z3_variables.append('holds_s' + str(combined_succ.index(cs)) + '_' + str(list_of_subformula.index(phi2)))
+                prod_right_or += 'Or(holds_s' + str(combined_succ.index(cs)) + '_' + str(index_of_phi2) + ' d_' + str(li[0]) + '_' + str(li[1]) + '_' + str(
+                    index_of_phi2) + '>d_s' + str(combined_succ.index(cs)) + '_' + str(index_of_phi2) + ') '
+                if 'holds_s' + str(combined_succ.index(cs)) + '_' + str(index_of_phi2) not in list_of_z3_variables:
+                    list_of_z3_variables.append('holds_s' + str(combined_succ.index(cs)) + '_' + str(index_of_phi2))
                 if 'd_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi2) not in list_of_z3_variables:
                     list_of_z3_variables.append('d_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi2))
-                if 'd_s' + str(combined_succ.index(cs)) + '_' + str(list_of_subformula.index(phi2)) not in list_of_z3_variables:
-                    list_of_z3_variables.append('d_s' + str(combined_succ.index(cs)) + '_' + str(list_of_subformula.index(phi2)))
-            prod_right_or += ')'
+                if 'd_s' + str(combined_succ.index(cs)) + '_' + str(index_of_phi2) not in list_of_z3_variables:
+                    list_of_z3_variables.append('d_s' + str(combined_succ.index(cs)) + '_' + str(index_of_phi2))
+            prod_right_or = prod_right_or[0:len(prod_right_or) - 1] + ')'
             prod_right += prod_right_or + ')'
             mul_clause += prod_right + ')'
-            result_string = 'A(' + result_string + ', ' + mul_clause
+            result_string = 'A(' + result_string + ' ' + mul_clause + ')'
     return result_string
 
 
@@ -194,18 +192,21 @@ def SemanticsBoundedUntil(model, formula_duplicate, combined_list_of_states, n):
     index_of_phi2 = list_of_subformula.index(phi2)
     k1 = int(formula_duplicate.children[1].value)
     k2 = int(formula_duplicate.children[2].value)
+    index_of_phi = list_of_subformula.index(formula_duplicate)
     if k2 == 0:
         result_string = 'A(' + Semantics(model, phi1, combined_list_of_states, n) + ' ' + Semantics(model, phi2, combined_list_of_states, n) + ')'
         result_string = 'A(' + result_string + ' '
         sum_of_loop1 = 'A('
         sum_of_loop2 = 'A('
         for li in combined_list_of_states:
-            first_and1 = "A(prob_" + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi1) + '=1' + ', holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi1) + ')'
-            second_and1 = "A(prob_" + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi1) + '=0' + ', Not(holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi1) + '))'
+            first_and1 = "A(prob_" + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi1) + '=1' + ' holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi1) + ')'
+            second_and1 = "A(prob_" + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi1) + '=0' + ' N(holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(
+                index_of_phi1) + '))'
             final_or1 = 'Or(' + first_and1 + ' ' + second_and1 + ')'
             sum_of_loop1 += final_or1 + ' '
-            first_and2 = "A(prob_" + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi2) + '=1' + ', holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi2) + ')'
-            second_and2 = "A(prob_" + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi2) + '=0' + ', Not(holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi2) + '))'
+            first_and2 = "A(prob_" + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi2) + '=1' + ' holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi2) + ')'
+            second_and2 = "A(prob_" + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi2) + '=0' + ' N(holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(
+                index_of_phi2) + '))'
             final_or2 = 'Or(' + first_and2 + ' ' + second_and2 + ')'
             sum_of_loop2 += final_or2 + ' '
             if "prob_" + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi1) not in list_of_z3_variables:
@@ -216,32 +217,29 @@ def SemanticsBoundedUntil(model, formula_duplicate, combined_list_of_states, n):
                 list_of_z3_variables.append("prob_" + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi2))
             if 'holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi2) not in list_of_z3_variables:
                 list_of_z3_variables.append('holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi2))
-        sum_of_loop1 += ')'
-        sum_of_loop2 += ')'
+        sum_of_loop1 = sum_of_loop1[0:len(sum_of_loop1) - 1] + ')'
+        sum_of_loop2 = sum_of_loop2[0:len(sum_of_loop2) - 1] + ')'
         result_string += sum_of_loop1 + ')'
         result_string = 'A(' + result_string + ' ' + sum_of_loop2 + ')'
 
         for li in combined_list_of_states:
             result_string = 'A(' + result_string + ' '
-            first_implies = 'Implies(holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi2) + ' ' + 'prob_' + str(li[0]) + '_' + str(li[1]) + '_' + str(
-                list_of_subformula.index(formula_duplicate)) + '=1'
+            first_implies = 'I(holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi2) + ' ' + 'prob_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi) + '=1)'
             if 'prob_' + str(li[0]) + '_' + str(li[1]) + '_' + str(list_of_subformula.index(formula_duplicate)) not in list_of_z3_variables:
                 list_of_z3_variables.append('prob_' + str(li[0]) + '_' + str(li[1]) + '_' + str(list_of_subformula.index(formula_duplicate)))
-            second_implies = 'Implies(A(Not(holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi1) + ') Not(holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(
-                index_of_phi2) + ')) ' + 'prob_' + str(li[0]) + '_' + str(li[1]) + '_' + str(list_of_subformula.index(formula_duplicate)) + '=0)'
-            result_string += first_implies + ' ' + second_implies
+            second_implies = 'I(N(holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi2) + ')' + ' prob_' + str(li[0]) + '_' + str(li[1]) + '_' + str(
+                index_of_phi) + '=0)'
+            result_string += first_implies + ' ' + second_implies + ')'
         result_string += ')'
 
     elif k1 == 0:
         left, k_1, k_2, right = formula_duplicate.children
-        index_of_phi = list_of_subformula.index(formula_duplicate)
         par = copy.deepcopy(k_2)
-        par.value = str(int(k_2.value) - 1)
-        # replace all AP_name_with_for_all in block with name_i in the rest of the formula
-        x = par.value
-        formula_duplicate.children[2] = par  # so now formula_duplicate is basically phi1_until[0,k2-1]_phi2 Don't be confused!!
+        par.value = str(
+            int(k_2.value) - 1)  # k2.value will have changed value but it won't show up in the formula tree, hence it'll appear to be the same formula as formula_duplicate
+        formula_duplicate.children[2] = par  # so now formula_duplicate is basically phi1_until[0,k2-1]_phi2. Don't be confused!!
         list_of_subformula.append(formula_duplicate)
-        index_of_replaced = len(list_of_subformula) - 1  #forcefully inserting new replaced formula, will obviously be inserted at the end
+        index_of_replaced = len(list_of_subformula) - 1  # forcefully inserting new replaced formula, will obviously be inserted at the end
         result_string = SemanticsBoundedUntil(model, formula_duplicate, combined_list_of_states, n)
 
         dict_of_acts = dict()
@@ -259,50 +257,51 @@ def SemanticsBoundedUntil(model, formula_duplicate, combined_list_of_states, n):
 
         for li in combined_list_of_states:
             result_string = 'A(' + result_string + ' '
-            first_implies = 'Implies(holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi2) + ' ' + 'prob_' + str(li[0]) + '_' + str(li[1]) + '_' + str(
-                index_of_phi) + '=1)'
+            first_implies = 'I(holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi2) + ' ' + 'prob_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi) + '=1)'
             if 'prob_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi) not in list_of_z3_variables:
                 list_of_z3_variables.append('prob_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi))
-            second_implies = 'Implies(A(Not(holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi1) + ') Not(holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(
+            if 'holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi2) not in list_of_z3_variables:
+                list_of_z3_variables.append('holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi2))
+            second_implies = 'I(A(N(holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi1) + ') N(holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(
                 index_of_phi2) + ')) ' + 'prob_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi) + '=0)'
+            if 'holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi1) not in list_of_z3_variables:
+                list_of_z3_variables.append('holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi1))
             result_string += first_implies + ' ' + second_implies + ')'
             combined_acts = list(itertools.product(dict_of_acts[li[0]], dict_of_acts[li[1]]))
             for ca in combined_acts:
-                implies_precedent = 'A(holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi1) + ' Not(holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(
-                    index_of_phi2) + ') A(a_' + str(combined_list_of_states.index(li)) + '_' + str(0) + '=' + str(ca[0]) + ', a_' + str(
+                implies_precedent = 'A(holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi1) + ' N(holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(
+                    index_of_phi2) + ') A(a_s' + str(combined_list_of_states.index(li)) + '_' + str(0) + '=' + str(ca[0]) + ' a_s' + str(
                     combined_list_of_states.index(li)) + '_' + str(1) + '=' + str(ca[1]) + '))'
-                if 'a_' + str(combined_list_of_states.index(li)) + '_' + str(0) not in list_of_z3_variables:
-                    list_of_z3_variables.append('a_' + str(combined_list_of_states.index(li)) + '_' + str(0))
-                if 'a_' + str(combined_list_of_states.index(li)) + '_' + str(1) not in list_of_z3_variables:
-                    list_of_z3_variables.append('a_' + str(combined_list_of_states.index(li)) + '_' + str(1))
+                if 'a_s' + str(combined_list_of_states.index(li)) + '_' + str(0) not in list_of_z3_variables:
+                    list_of_z3_variables.append('a_s' + str(combined_list_of_states.index(li)) + '_' + str(0))
+                if 'a_s' + str(combined_list_of_states.index(li)) + '_' + str(1) not in list_of_z3_variables:
+                    list_of_z3_variables.append('a_s' + str(combined_list_of_states.index(li)) + '_' + str(1))
 
-                implies_antecedent = 'prob_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi) + ' = A('
+                implies_antecedent = 'prob_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi) + '=A('
                 combined_succ = list(itertools.product(dict_of_acts_tran[str(li[0]) + " " + str(ca[0])], dict_of_acts_tran[str(li[1]) + " " + str(ca[1])]))
                 first = True
                 prod = ''
                 for cs in combined_succ:
                     if first:
-                        prod = '(' + str(cs[0]) + ' * ' + str(cs[1]) + ' * ' + 'prob_s' + str(combined_succ.index(cs)) + '_' + str(index_of_replaced) + ')'
+                        prod = '(' + str(cs[0]) + '*' + str(cs[1]) + '*' + 'prob_s' + str(combined_succ.index(cs)) + '_' + str(index_of_replaced) + ')'
                         first = False
                     else:
-                        prod += '+ (' + str(cs[0]) + ' * ' + str(cs[1]) + ' * ' + 'prob_s' + str(combined_succ.index(cs)) + '_' + str(index_of_replaced) + ')'
+                        prod += '+(' + str(cs[0]) + '*' + str(cs[1]) + '*' + 'prob_s' + str(combined_succ.index(cs)) + '_' + str(index_of_replaced) + ')'
                     if 'prob_s' + str(combined_succ.index(cs)) + '_' + str(index_of_replaced) not in list_of_z3_variables:
                         list_of_z3_variables.append('prob_s' + str(combined_succ.index(cs)) + '_' + str(index_of_replaced))
                 implies_antecedent += prod + ')'
-                result_string = 'A(' + result_string + ' Implies(' + implies_precedent + ' ' + implies_antecedent + '))'
+                result_string = 'A(' + result_string + ' I(' + implies_precedent + ' ' + implies_antecedent + '))'
 
     elif k1 > 0:
         left, k_1, k_2, right = formula_duplicate.children
-        index_of_phi = list_of_subformula.index(formula_duplicate)
         par1 = copy.deepcopy(k_1)
         par2 = copy.deepcopy(k_2)
         par1.value = str(int(k_1.value) - 1)
         par2.value = str(int(k_2.value) - 1)
-        # replace all AP_name_with_for_all in block with name_i in the rest of the formula
         formula_duplicate.children[1] = par1  # so now formula_duplicate is basically phi1_until[0,k2-1]_phi2 Don't be confused!!
         formula_duplicate.children[2] = par2
         list_of_subformula.append(formula_duplicate)
-        index_of_replaced = len(list_of_subformula) - 1 #forcefully inserting new replaced formula, will obviously be inserted at the end
+        index_of_replaced = len(list_of_subformula) - 1  # forcefully inserting new replaced formula, will obviously be inserted at the end
         result_string = SemanticsBoundedUntil(model, formula_duplicate, combined_list_of_states, n)
 
         dict_of_acts = dict()
@@ -320,7 +319,7 @@ def SemanticsBoundedUntil(model, formula_duplicate, combined_list_of_states, n):
 
         for li in combined_list_of_states:
             result_string = 'A(' + result_string + ' '
-            first_implies = 'Implies(Not(holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi1) + ') ' + 'prob_' + str(li[0]) + '_' + str(li[1]) + '_' + str(
+            first_implies = 'I(N(holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi1) + ') ' + 'prob_' + str(li[0]) + '_' + str(li[1]) + '_' + str(
                 index_of_phi) + '=0)'
             if 'holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi1) not in list_of_z3_variables:
                 list_of_z3_variables.append('holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi1))
@@ -329,14 +328,14 @@ def SemanticsBoundedUntil(model, formula_duplicate, combined_list_of_states, n):
             result_string += first_implies + ')'
             combined_acts = list(itertools.product(dict_of_acts[li[0]], dict_of_acts[li[1]]))
             for ca in combined_acts:
-                implies_precedent = 'A(holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi1) + ' A(a_' + str(combined_list_of_states.index(li)) + '_' + str(0) + '=' + str(ca[0]) + ', a_' + str(
-                    combined_list_of_states.index(li)) + '_' + str(1) + '=' + str(ca[1]) + '))'
-                if 'a_' + str(combined_list_of_states.index(li)) + '_' + str(0) not in list_of_z3_variables:
-                    list_of_z3_variables.append('a_' + str(combined_list_of_states.index(li)) + '_' + str(0))
-                if 'a_' + str(combined_list_of_states.index(li)) + '_' + str(1) not in list_of_z3_variables:
-                    list_of_z3_variables.append('a_' + str(combined_list_of_states.index(li)) + '_' + str(1))
+                implies_precedent = 'A(holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi1) + ' A(a_s' + str(combined_list_of_states.index(li)) + '_' + str(
+                    0) + '=' + str(ca[0]) + ' a_s' + str(combined_list_of_states.index(li)) + '_' + str(1) + '=' + str(ca[1]) + '))'
+                if 'a_s' + str(combined_list_of_states.index(li)) + '_' + str(0) not in list_of_z3_variables:
+                    list_of_z3_variables.append('a_s' + str(combined_list_of_states.index(li)) + '_' + str(0))
+                if 'a_s' + str(combined_list_of_states.index(li)) + '_' + str(1) not in list_of_z3_variables:
+                    list_of_z3_variables.append('a_s' + str(combined_list_of_states.index(li)) + '_' + str(1))
 
-                implies_antecedent = 'prob_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi) + ' = A('
+                implies_antecedent = 'prob_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi) + '=A('
                 combined_succ = list(itertools.product(dict_of_acts_tran[str(li[0]) + " " + str(ca[0])], dict_of_acts_tran[str(li[1]) + " " + str(ca[1])]))
                 first = True
                 prod = ''
@@ -350,7 +349,7 @@ def SemanticsBoundedUntil(model, formula_duplicate, combined_list_of_states, n):
                         list_of_z3_variables.append('prob_s' + str(combined_succ.index(cs)) + '_' + str(index_of_replaced))
                 implies_antecedent += prod + ')'
 
-                result_string = 'A(' + result_string + ' Implies(' + implies_precedent + ' ' + implies_antecedent + '))'
+                result_string = 'A(' + result_string + ' I(' + implies_precedent + ' ' + implies_antecedent + '))'
 
     return result_string
 
@@ -359,19 +358,12 @@ def Semantics(model, formula_duplicate, combined_list_of_states, n):
     result_string = ''
     if formula_duplicate.data == 'true':
         result_string += 'A('
-        first = True
         index_of_phi = list_of_subformula.index(formula_duplicate)
         for i in range(len(combined_list_of_states)):
-            if first:
-                result_string += "holds_" + str(combined_list_of_states[i][0]) + "_" + str(combined_list_of_states[i][1]) + "_" + str(index_of_phi)
-                if "holds_" + str(combined_list_of_states[i][0]) + "_" + str(combined_list_of_states[i][1]) + "_" + str(index_of_phi) not in list_of_z3_variables:
-                    list_of_z3_variables.append("holds_" + str(combined_list_of_states[i][0]) + "_" + str(combined_list_of_states[i][1]) + "_" + str(index_of_phi))
-                first = False
-            else:
-                result_string += ",holds_" + str(combined_list_of_states[i][0]) + "_" + str(combined_list_of_states[i][1]) + "_" + str(index_of_phi)
-                if "holds_" + str(combined_list_of_states[i][0]) + "_" + str(combined_list_of_states[i][1]) + "_" + str(index_of_phi) not in list_of_z3_variables:
-                    list_of_z3_variables.append("holds_" + str(combined_list_of_states[i][0]) + "_" + str(combined_list_of_states[i][1]) + "_" + str(index_of_phi))
-        result_string += ')'
+            result_string += "holds_" + str(combined_list_of_states[i][0]) + "_" + str(combined_list_of_states[i][1]) + "_" + str(index_of_phi) + ' '
+            if "holds_" + str(combined_list_of_states[i][0]) + "_" + str(combined_list_of_states[i][1]) + "_" + str(index_of_phi) not in list_of_z3_variables:
+                list_of_z3_variables.append("holds_" + str(combined_list_of_states[i][0]) + "_" + str(combined_list_of_states[i][1]) + "_" + str(index_of_phi))
+        result_string = result_string[0: len(result_string) - 1] + ')'
     elif formula_duplicate.data == 'var':  # var handles the inside varname
         list_of_state_with_ap = []
         ap_name = formula_duplicate.children[0].children[0].value
@@ -386,18 +378,16 @@ def Semantics(model, formula_duplicate, combined_list_of_states, n):
         for li in combined_list_of_states:
             if li[int(ap_state) - 1] in list_of_state_with_ap:
                 and_for_yes += 'holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi) + ' '
-                if 'holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi) not in list_of_z3_variables:
-                    list_of_z3_variables.append('holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi))
             else:
-                and_for_no += 'Not(holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi) + ') '
-                if 'holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi) not in list_of_z3_variables:
-                    list_of_z3_variables.append('holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi))
-        and_for_yes += ')'
-        and_for_no += ')'
-        result_string = 'A(' + and_for_yes + and_for_no + ')'
+                and_for_no += 'N(holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi) + ') '
+            if 'holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi) not in list_of_z3_variables:
+                list_of_z3_variables.append('holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi))
+        and_for_yes = and_for_yes[0: len(and_for_yes) - 1] + ')'
+        and_for_no = and_for_no[0: len(and_for_no) - 1] + ')'
+        result_string = 'A(' + and_for_yes + ' ' + and_for_no + ')'
     elif formula_duplicate.data == 'and_op':
-        result_string = 'A(' + Semantics(model, formula_duplicate.children[0], combined_list_of_states, n) + Semantics(model, formula_duplicate.children[1],
-                                                                                                                       combined_list_of_states, n) + ')'
+        result_string = 'A(' + Semantics(model, formula_duplicate.children[0], combined_list_of_states, n) + ' ' + Semantics(model, formula_duplicate.children[1],
+                                                                                                                             combined_list_of_states, n) + ')'
         sum_of_loop = 'A('
         index_phi = list_of_subformula.index(formula_duplicate)
         index_phi1 = list_of_subformula.index(formula_duplicate.children[0])
@@ -405,50 +395,49 @@ def Semantics(model, formula_duplicate, combined_list_of_states, n):
         for li in combined_list_of_states:
             first_ands = "A(holds_" + str(li[0]) + '_' + str(li[1]) + '_' + str(index_phi) + ' ' + 'holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(
                 index_phi1) + ' ' + 'holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_phi2) + ')'
+            second_mix = "A(N(holds_" + str(li[0]) + '_' + str(li[1]) + '_' + str(index_phi) + ') ' + 'V(N(holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(
+                index_phi1) + ') ' + 'N(holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_phi2) + ')))'
             if "holds_" + str(li[0]) + '_' + str(li[1]) + '_' + str(index_phi) not in list_of_z3_variables:
                 list_of_z3_variables.append("holds_" + str(li[0]) + '_' + str(li[1]) + '_' + str(index_phi))
             if "holds_" + str(li[0]) + '_' + str(li[1]) + '_' + str(index_phi1) not in list_of_z3_variables:
                 list_of_z3_variables.append("holds_" + str(li[0]) + '_' + str(li[1]) + '_' + str(index_phi1))
             if "holds_" + str(li[0]) + '_' + str(li[1]) + '_' + str(index_phi2) not in list_of_z3_variables:
                 list_of_z3_variables.append("holds_" + str(li[0]) + '_' + str(li[1]) + '_' + str(index_phi2))
-            second_mix = "A(Not(holds_" + str(li[0]) + '_' + str(li[1]) + '_' + str(index_phi) + ') ' + 'V(Not(holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(
-                index_phi1) + ') ' + 'Not(holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_phi2) + ')))'
             sum_of_loop += 'V(' + first_ands + " " + second_mix + ') '
-        sum_of_loop += ')'
+        sum_of_loop = sum_of_loop[0: len(sum_of_loop) - 1] + ')'
         result_string = 'A(' + result_string + ' ' + sum_of_loop + ') '
     elif formula_duplicate.data == 'neg_op':
         sem = Semantics(model, formula_duplicate.children[0], combined_list_of_states, n)
         index_phi = list_of_subformula.index(formula_duplicate)
         index_phi1 = list_of_subformula.index(formula_duplicate.children[0])
-        result_string = 'A(' + sem + 'A('
+        result_string = 'A(' + sem + ' A('
         for li in combined_list_of_states:
-            result_string += 'Xor(' + 'holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_phi) + ', ' + 'holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(
-                index_phi1) + ') '
+            result_string += 'X(holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_phi) + ' ' + 'holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_phi1) + ') '
             if 'holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_phi) not in list_of_z3_variables:
                 list_of_z3_variables.append('holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_phi))
             if 'holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_phi1) not in list_of_z3_variables:
                 list_of_z3_variables.append('holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_phi1))
-        result_string += '))'
+        result_string = result_string[0:len(result_string) - 1] + '))'
     elif formula_duplicate.data == 'less_prob':
-        result_string = 'A(' + Semantics(model, formula_duplicate.children[0], combined_list_of_states, n) + Semantics(model, formula_duplicate.children[1],
-                                                                                                                       combined_list_of_states, n) + ')'
+        result_string = 'A(' + Semantics(model, formula_duplicate.children[0], combined_list_of_states, n) + ' ' + Semantics(model, formula_duplicate.children[1],
+                                                                                                                             combined_list_of_states, n) + ')'
         index_phi = list_of_subformula.index(formula_duplicate)
         index_phi1 = list_of_subformula.index(formula_duplicate.children[0])
         index_phi2 = list_of_subformula.index(formula_duplicate.children[1])
         result_string = 'A(' + result_string + ' A('
         for li in combined_list_of_states:
-            and_less = 'A(holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_phi) + ', prob_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_phi1) + ' < prob_' + str(
+            and_less = 'A(holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_phi) + ' prob_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_phi1) + '<prob_' + str(
                 li[0]) + '_' + str(li[1]) + '_' + str(index_phi2) + ')'
+            and_great = 'A(N(holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_phi) + ') (prob_' + str(li[0]) + '_' + str(li[1]) + '_' + str(
+                index_phi1) + '>=prob_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_phi2) + ')'
             if 'holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_phi) not in list_of_z3_variables:
                 list_of_z3_variables.append('holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_phi))
             if 'prob_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_phi1) not in list_of_z3_variables:
                 list_of_z3_variables.append('prob_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_phi1))
             if 'prob_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_phi2) not in list_of_z3_variables:
                 list_of_z3_variables.append('prob_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_phi2))
-            and_great = 'A(Not(holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_phi) + '), prob_' + str(li[0]) + '_' + str(li[1]) + '_' + str(
-                index_phi1) + ' >= prob_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_phi2) + ')'
-            result_string += 'V(' + and_less + ', ' + and_great + ')'
-        result_string += '))'
+            result_string += 'V(' + and_less + ' ' + and_great + ') '
+        result_string = result_string[0:len(result_string) - 1] + '))'
     elif formula_duplicate.data == 'calc_probability':
         child = formula_duplicate.children[0]
         if child.data == 'calc_next':
@@ -463,14 +452,14 @@ def Semantics(model, formula_duplicate, combined_list_of_states, n):
         result_string = 'A(' + result_string + ' A('
         index_phi1 = list_of_subformula.index(phi1)
         for li in combined_list_of_states:
-            pos_and = 'A(prob_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_phi1) + ' = 1, holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_phi1) + ')'
+            pos_and = 'A(prob_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_phi1) + '=1 holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_phi1) + ')'
             if 'prob_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_phi1) not in list_of_z3_variables:
                 list_of_z3_variables.append('prob_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_phi1))
             if 'holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_phi1) not in list_of_z3_variables:
                 list_of_z3_variables.append('holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_phi1))
-            neg_and = 'A(prob_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_phi1) + ' = 0, Not(holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_phi1) + '))'
-            result_string += 'Or(' + pos_and + ', ' + neg_and + ')'
-        result_string += '))'
+            neg_and = 'A(prob_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_phi1) + '=0 N(holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_phi1) + '))'
+            result_string += 'Or(' + pos_and + ' ' + neg_and + ') '
+        result_string = result_string[0:len(result_string) - 1] + '))'
         dict_of_acts = dict()
         dict_of_acts_tran = dict()
         for state in model.states:
@@ -480,42 +469,40 @@ def Semantics(model, formula_duplicate, combined_list_of_states, n):
                 list_of_act.append(action.id)
                 for tran in action.transitions:
                     # list_of_tran.append({tran.column: tran.value()})
-                    list_of_tran.append(tran.value())
+                    list_of_tran.append(tran.value())  # storing just transition values, not state it transitions to
                 dict_of_acts_tran[str(state.id) + ' ' + str(action.id)] = list_of_tran
             dict_of_acts[state.id] = list_of_act
         result_string = 'A(' + result_string + ' '
         for li in combined_list_of_states:
             combined_acts = list(itertools.product(dict_of_acts[li[0]], dict_of_acts[li[1]]))
             for ca in combined_acts:
-                state_act_clause = ''
-                implies_precedent = 'A('
-                implies_precedent += 'a_' + str(combined_list_of_states.index(li)) + '_' + str(0) + ' = ' + str(ca[0]) + ', a_' + str(
-                    combined_list_of_states.index(li)) + '_' + str(1) + ' = ' + str(ca[1]) + ')'
-                if 'a_' + str(combined_list_of_states.index(li)) + '_' + str(0) not in list_of_z3_variables:
-                    list_of_z3_variables.append('a_' + str(combined_list_of_states.index(li)) + '_' + str(0))
-                if 'a_' + str(combined_list_of_states.index(li)) + '_' + str(1) not in list_of_z3_variables:
-                    list_of_z3_variables.append('a_' + str(combined_list_of_states.index(li)) + '_' + str(1))
-                mul_clause = 'prob_' + str(combined_list_of_states.index(li)) + '_' + str(list_of_subformula.index(formula_duplicate)) + ' = '
-                if 'prob_' + str(combined_list_of_states.index(li)) + '_' + str(list_of_subformula.index(formula_duplicate)) not in list_of_z3_variables:
-                    list_of_z3_variables.append('prob_' + str(combined_list_of_states.index(li)) + '_' + str(list_of_subformula.index(formula_duplicate)))
+                implies_precedent = 'A(a_s' + str(combined_list_of_states.index(li)) + '_' + str(0) + '=' + str(ca[0]) + ' a_s' + str(
+                    combined_list_of_states.index(li)) + '_' + str(1) + '=' + str(ca[1]) + ')'
+                if 'a_s' + str(combined_list_of_states.index(li)) + '_' + str(0) not in list_of_z3_variables:
+                    list_of_z3_variables.append('a_s' + str(combined_list_of_states.index(li)) + '_' + str(0))
+                if 'a_s' + str(combined_list_of_states.index(li)) + '_' + str(1) not in list_of_z3_variables:
+                    list_of_z3_variables.append('a_s' + str(combined_list_of_states.index(li)) + '_' + str(1))
+                mul_clause = 'prob_' + str(li[0]) + '_' + str(li[1]) + '_' + str(list_of_subformula.index(formula_duplicate)) + '='
+                if 'prob_' + str(li[0]) + '_' + str(li[1]) + '_' + str(list_of_subformula.index(formula_duplicate)) not in list_of_z3_variables:
+                    list_of_z3_variables.append('prob_' + str(li[0]) + '_' + str(li[1]) + '_' + str(list_of_subformula.index(formula_duplicate)))
                 combined_succ = list(itertools.product(dict_of_acts_tran[str(li[0]) + " " + str(ca[0])], dict_of_acts_tran[str(li[1]) + " " + str(ca[1])]))
                 implies_antecedent = ''
                 first = True
                 prod = ''
                 for cs in combined_succ:
                     if first:
-                        prod = '(' + str(cs[0]) + ' * ' + str(cs[1]) + 'prob_s' + str(combined_succ.index(cs)) + '_' + str(list_of_subformula.index(phi1)) + ')'
+                        prod = '(' + str(cs[0]) + '*' + str(cs[1]) + '*' + 'prob_s' + str(combined_succ.index(cs)) + '_' + str(index_phi1) + ')'
                         first = False
                     else:
-                        prod += '+ (' + str(cs[0]) + ' * ' + str(cs[1]) + 'prob_s' + str(combined_succ.index(cs)) + '_' + str(list_of_subformula.index(phi1)) + ')'
-                    if 'prob_s' + str(combined_succ.index(cs)) + '_' + str(list_of_subformula.index(phi1)) not in list_of_z3_variables:
-                        list_of_z3_variables.append('prob_s' + str(combined_succ.index(cs)) + '_' + str(list_of_subformula.index(phi1)))
+                        prod += '+(' + str(cs[0]) + '*' + str(cs[1]) + '*' + 'prob_s' + str(combined_succ.index(cs)) + '_' + str(index_phi1) + ')'
+                    if 'prob_s' + str(combined_succ.index(cs)) + '_' + str(index_phi1) not in list_of_z3_variables:
+                        list_of_z3_variables.append('prob_s' + str(combined_succ.index(cs)) + '_' + str(index_phi1))
 
-                mul_clause += prod
+                mul_clause += '(' + prod + ')'
                 implies_antecedent = '(' + mul_clause + ')'
-                state_act_clause = 'Implies(' + implies_precedent + ' ' + implies_antecedent + ')'
+                state_act_clause = 'I(' + implies_precedent + ' ' + implies_antecedent + ')'
                 result_string += state_act_clause + ' '
-        result_string += ')'
+        result_string = result_string[0:len(result_string) - 1] + ')'
 
     elif formula_duplicate.data == 'calc_until_unbounded':
         result_string = SemanticsUnboundedUntil(model, formula_duplicate, combined_list_of_states, n)
@@ -524,37 +511,37 @@ def Semantics(model, formula_duplicate, combined_list_of_states, n):
     elif formula_duplicate.data == 'const':
         c = formula_duplicate.children[0].value
         result_string = 'A('
-        first = True
         for li in combined_list_of_states:
-            if first:
-                result_string += 'prob_' + str(li[0]) + '_' + str(li[1]) + '_' + str(list_of_subformula.index(formula_duplicate)) + ' = ' + c
-                first = False
-            else:
-                result_string += ', prob_' + str(li[0]) + '_' + str(li[1]) + '_' + str(list_of_subformula.index(formula_duplicate)) + ' = ' + c
+            result_string += 'prob_' + str(li[0]) + '_' + str(li[1]) + '_' + str(list_of_subformula.index(formula_duplicate)) + '=' + c + ' '
             if ('prob_' + str(li[0]) + '_' + str(li[1]) + '_' + str(list_of_subformula.index(formula_duplicate))) not in list_of_z3_variables:
                 list_of_z3_variables.append('prob_' + str(li[0]) + '_' + str(li[1]) + '_' + str(list_of_subformula.index(formula_duplicate)))
-        result_string += ')'
+        result_string = result_string[0:len(result_string)] + ')'
     elif formula_duplicate.data in ['add_prob', 'minus_prob', 'mul_prob']:
         left = formula_duplicate.children[0]
         index_left = list_of_subformula.index(left)
         right = formula_duplicate.children[1]
         index_right = list_of_subformula.index(right)
-        result_string = 'A(' + Semantics(model, left, combined_list_of_states, n) + ', ' + Semantics(model, right, combined_list_of_states, n) + ')'
-        result_string = 'A(' + result_string + ', A('
+        result_string = 'A(' + Semantics(model, left, combined_list_of_states, n) + ' ' + Semantics(model, right, combined_list_of_states, n) + ')'
+        result_string = 'A(' + result_string + ' A('
         op = ''
         for li in combined_list_of_states:
             if formula_duplicate.data == 'add_prob':
-                op = 'prob_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_left) + ' + ' + 'prob_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_right)
+                op = 'prob_' + str(li[0]) + '_' + str(li[1]) + '_' + str(list_of_subformula.index(formula_duplicate)) + '=prob_' + str(li[0]) + '_' + str(li[1]) + '_' + str(
+                    index_left) + '+' + 'prob_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_right)
             elif formula_duplicate.data == 'minus_prob':
-                op = 'prob_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_left) + ' - ' + 'prob_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_right)
+                op = 'prob_' + str(li[0]) + '_' + str(li[1]) + '_' + str(list_of_subformula.index(formula_duplicate)) + '=prob_' + str(li[0]) + '_' + str(li[1]) + '_' + str(
+                    index_left) + '-' + 'prob_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_right)
             elif formula_duplicate.data == 'mul_prob':
-                op = 'prob_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_left) + ' * ' + 'prob_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_right)
-            result_string += op
+                op = 'prob_' + str(li[0]) + '_' + str(li[1]) + '_' + str(list_of_subformula.index(formula_duplicate)) + '=prob_' + str(li[0]) + '_' + str(li[1]) + '_' + str(
+                    index_left) + '*' + 'prob_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_right)
+            result_string += op + ' '
             if 'prob_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_left) not in list_of_z3_variables:
                 list_of_z3_variables.append('prob_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_left))
             if 'prob_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_right) not in list_of_z3_variables:
                 list_of_z3_variables.append('prob_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_right))
-        result_string += '))'
+            if 'prob_' + str(li[0]) + '_' + str(li[1]) + '_' + str(list_of_subformula.index(formula_duplicate)) not in list_of_z3_variables:
+                list_of_z3_variables.append('prob_' + str(li[0]) + '_' + str(li[1]) + '_' + str(list_of_subformula.index(formula_duplicate)))
+        result_string = result_string[0:len(result_string)] + '))'
 
     return result_string
 
@@ -566,10 +553,10 @@ def Truth(model, formula_initial, combined_list_of_states, n):
         if formula_initial.data in ['exist_scheduler', 'forall_scheduler']:
             formula_initial = formula_initial.children[1]
         elif formula_initial.data == 'exist':
-            list_of_AV.append('Or')
+            list_of_AV.append('V')
             formula_initial = formula_initial.children[1]
         elif formula_initial.data == 'forall':
-            list_of_AV.append('And')
+            list_of_AV.append('A')
             formula_initial = formula_initial.children[1]
     index_of_phi = list_of_subformula.index(formula_initial)
     result_string = ""
@@ -582,37 +569,22 @@ def Truth(model, formula_initial, combined_list_of_states, n):
         for i in range(len(combined_list_of_states)):
             if first or combined_list_of_states[i - 1][0] == combined_list_of_states[i][0] - 1:
                 if list_of_AV[1] == 'V':
-                    result_string += "V(" + "holds_" + str(combined_list_of_states[i][0]) + "_" + str(combined_list_of_states[i][1]) + "_" + str(index_of_phi) + " ,"
-                    if "holds_" + str(combined_list_of_states[i][0]) + "_" + str(combined_list_of_states[i][1]) + "_" + str(index_of_phi) not in list_of_z3_variables:
-                        list_of_z3_variables.append("holds_" + str(combined_list_of_states[i][0]) + "_" + str(combined_list_of_states[i][1]) + "_" + str(index_of_phi))
+                    result_string += "V(holds_" + str(combined_list_of_states[i][0]) + "_" + str(combined_list_of_states[i][1]) + "_" + str(index_of_phi) + " "
                 else:
-                    result_string += "A(" + "holds_" + str(combined_list_of_states[i][0]) + "_" + str(combined_list_of_states[i][1]) + "_" + str(index_of_phi) + " ,"
-                    if "holds_" + str(combined_list_of_states[i][0]) + "_" + str(combined_list_of_states[i][1]) + "_" + str(index_of_phi) not in list_of_z3_variables:
-                        list_of_z3_variables.append("holds_" + str(combined_list_of_states[i][0]) + "_" + str(combined_list_of_states[i][1]) + "_" + str(index_of_phi))
+                    result_string += "A(holds_" + str(combined_list_of_states[i][0]) + "_" + str(combined_list_of_states[i][1]) + "_" + str(index_of_phi) + " "
                 first = False
             elif ((i + 1) == len(combined_list_of_states)) or combined_list_of_states[i][0] == combined_list_of_states[i + 1][0] - 1:
-                if list_of_AV[1] == 'V':
-                    result_string += "holds_" + str(combined_list_of_states[i][0]) + "_" + str(combined_list_of_states[i][1]) + "_" + str(index_of_phi) + ")"
-                    if "holds_" + str(combined_list_of_states[i][0]) + "_" + str(combined_list_of_states[i][1]) + "_" + str(index_of_phi) not in list_of_z3_variables:
-                        list_of_z3_variables.append("holds_" + str(combined_list_of_states[i][0]) + "_" + str(combined_list_of_states[i][1]) + "_" + str(index_of_phi))
-                else:
-                    result_string += "holds_" + str(combined_list_of_states[i][0]) + "_" + str(combined_list_of_states[i][1]) + "_" + str(index_of_phi) + ")"
-                    if "holds_" + str(combined_list_of_states[i][0]) + "_" + str(combined_list_of_states[i][1]) + "_" + str(index_of_phi) not in list_of_z3_variables:
-                        list_of_z3_variables.append("holds_" + str(combined_list_of_states[i][0]) + "_" + str(combined_list_of_states[i][1]) + "_" + str(index_of_phi))
+                result_string += "holds_" + str(combined_list_of_states[i][0]) + "_" + str(combined_list_of_states[i][1]) + "_" + str(index_of_phi) + ")"
             else:
                 if list_of_AV[1] == 'V':
-                    result_string += "holds_" + str(combined_list_of_states[i][0]) + "_" + str(combined_list_of_states[i][1]) + "_" + str(index_of_phi) + " ,"
-                    if "holds_" + str(combined_list_of_states[i][0]) + "_" + str(combined_list_of_states[i][1]) + "_" + str(index_of_phi) not in list_of_z3_variables:
-                        list_of_z3_variables.append("holds_" + str(combined_list_of_states[i][0]) + "_" + str(combined_list_of_states[i][1]) + "_" + str(index_of_phi))
-                else:
-                    result_string += "holds_" + str(combined_list_of_states[i][0]) + "_" + str(combined_list_of_states[i][1]) + "_" + str(index_of_phi) + " ,"
-                    if "holds_" + str(combined_list_of_states[i][0]) + "_" + str(combined_list_of_states[i][1]) + "_" + str(index_of_phi) not in list_of_z3_variables:
-                        list_of_z3_variables.append("holds_" + str(combined_list_of_states[i][0]) + "_" + str(combined_list_of_states[i][1]) + "_" + str(index_of_phi))
+                    result_string += "holds_" + str(combined_list_of_states[i][0]) + "_" + str(combined_list_of_states[i][1]) + "_" + str(index_of_phi) + " "
+            if "holds_" + str(combined_list_of_states[i][0]) + "_" + str(combined_list_of_states[i][1]) + "_" + str(index_of_phi) not in list_of_z3_variables:
+                list_of_z3_variables.append("holds_" + str(combined_list_of_states[i][0]) + "_" + str(combined_list_of_states[i][1]) + "_" + str(index_of_phi))
         result_string += ')'
     return result_string
 
 
-def check(F):  # this will take the string F, convert it to z3 compatible equation and return the result of smt checking
+def check(F):  # this will take the string F, convert it to z3 compatible equation and return the result of smt checking, True if sat
     pass
 
 
@@ -620,8 +592,7 @@ def add_to_subformula_list(formula_phi):  # add as you go any new subformula par
     if formula_phi.data in ['exist_scheduler', 'forall_scheduler', 'exist', 'forall']:
         formula_phi = formula_phi.children[1]
         add_to_subformula_list(formula_phi)
-    elif formula_phi.data in ['and_op', 'or_op', 'less_prob', 'greater_prob', 'equal_prob', 'greatereq_prob', 'lesseq_prob', 'add_prob', 'minus_prob', 'mul_prob',
-                              'calc_until_unbounded']:
+    elif formula_phi.data in ['and_op', 'less_prob', 'add_prob', 'minus_prob', 'mul_prob', 'calc_until_unbounded']:
         list_of_subformula.append(formula_phi)
         left_child = formula_phi.children[0]
         add_to_subformula_list(left_child)
@@ -643,15 +614,11 @@ def add_to_subformula_list(formula_phi):  # add as you go any new subformula par
 
 
 def main_smt_encoding(model, formula_initial, formula):
-    F = ""
-    sa = ""
-    first_i = True
     first_o = True
     list_of_states = []
     F = 'A('
 
     for state in model.states:
-        act = ""
         first_i = True
         sa = 'V('
         for action in state.actions:
@@ -662,13 +629,13 @@ def main_smt_encoding(model, formula_initial, formula):
                 sa += act
                 first_i = False
             else:
-                sa += ', ' + act
+                sa += ' ' + act
         sa += ')'
         if first_o:
             F += sa
             first_o = False
         else:
-            F += ", " + sa
+            F += " " + sa
     F += ')'
     add_to_subformula_list(formula_initial)
 
@@ -688,7 +655,7 @@ def main_smt_encoding(model, formula_initial, formula):
 
     if formula_initial.data == 'exist_scheduler':
         truth_result = Truth(model, formula_initial, combined_list_of_states, n)
-        F = "A(" + F + "," + semantics_result + "," + truth_result + ")"
+        F = "A(" + F + " " + semantics_result + " " + truth_result + ")"
         if check(F):
             return True
         else:
@@ -716,7 +683,7 @@ def main_smt_encoding(model, formula_initial, formula):
                 i += 1
         new_parsed_formula = parser.parse(new_formula)
         truth_result = Truth(model, new_parsed_formula, combined_list_of_states, n)
-        F = F + "A (" + semantics_result + ") A (" + truth_result + ")"
+        F = 'A(' + F + ' ' + semantics_result + ' ' + truth_result + ')'
         if check(F):
             return False
         else:
