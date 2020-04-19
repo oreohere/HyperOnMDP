@@ -80,9 +80,15 @@ def try_z3():
     z = Bool('z')
     z1 = Bool('z1')
     s = Solver()
-    s.add(And(Or(3 * x1 == y * y1, x1 == 3), Not(z), z1 == True, And(z, z1)))
-    s.add(y == 2)
-    s.add(x1 + y == 5)
+    equation = Or()
+    equation.children = [z == True, z1 == True]
+    s.add(equation)
+    # s.add(Or(z))
+    t1 = s.check()
+    m = s.model()
+    s.add(And(z1 == True, Or(z), And(z, z1, )))
+    # s.add(y == 2)
+    # s.add(x1 + y == 5)
     t = s.check()
     print("Hi")
 
@@ -549,7 +555,7 @@ def Semantics(model, formula_duplicate, combined_list_of_states, n):
 def Truth(model, formula_initial, combined_list_of_states, n):
     list_of_AV = []  # will have the OR,AND according to the quantifier in that index in the formula
 
-    while type(formula_initial.children[0]) == Token:
+    while len(formula_initial.children) > 0 and type(formula_initial.children[0]) == Token:
         if formula_initial.data in ['exist_scheduler', 'forall_scheduler']:
             formula_initial = formula_initial.children[1]
         elif formula_initial.data == 'exist':
@@ -585,8 +591,145 @@ def Truth(model, formula_initial, combined_list_of_states, n):
 
 
 def check(F):  # this will take the string F, convert it to z3 compatible equation and return the result of smt checking, True if sat
-    pass
+    list_of_reals = []
+    listOfReals = []
+    list_of_bools = []
+    listOfBools = []
+    list_of_ints = []
+    listOfInts = []
 
+    for name in list_of_z3_variables:
+        if name[0] == 'h':
+            list_of_bools.append(name)
+            listOfBools.append(Bool(name))
+        elif name[0] in ['p', 'd']:
+            list_of_reals.append(name)
+            listOfReals.append(Real(name))
+        elif name[0] == 'a':
+            list_of_ints.append(name)
+            listOfInts.append(Int(name))
+        else:
+            print(name)
+    total_eqn = None
+    i = 0
+    operator = []
+    operands = []
+    open_paran = 0
+    close_paran = 0
+    s_in_op = False
+    n_in_op = False
+    le = len(F)
+    while i < len(F):
+        ch = F[i]
+        if F[i] in ['A', 'V', 'I', 'N', 'X']:
+            operator.append(F[i])
+            i += 1
+        elif F[i] == '(':
+            open_paran += 1
+            operands.append(' ')
+            i += 1
+        elif F[i] in ['a', 'h', 'p', 'd']:
+            s_in_op = True
+            op_space_index = F.find(' ', i)
+            op_brac_index = F.find(')', i)
+            if (op_space_index < op_brac_index and op_space_index != -1) or op_brac_index == -1:
+                operands.append(F[i:op_space_index])
+                i = op_space_index
+            else:    #if (op_space_index > op_brac_index and op_brac_index != -1) or op_space_index == -1:
+                operands.append((F[i:op_brac_index]))
+                i = op_brac_index
+        elif F[i] == ')':
+            close_paran += 1
+            if operator[open_paran - close_paran] in ['V', 'A', 'I', 'X', 'N']:
+                equation = None
+                if s_in_op:
+                    ran_list = []
+                    k = 0
+                    while k < len(operands):
+                        if type(operands[k]) == str and operands[k] != ' ':
+                            if operands[k][0] == 'a':
+                                eq_index = operands[k].find('=', 0)
+                                num = int(operands[k][eq_index + 1:])
+                                name = operands[k][0:eq_index]
+                                ran_list.append(listOfInts[list_of_ints.index(name)] == num)
+                                operands.pop(k)
+                            elif operands[k][0] == 'h':
+                                ran_list.append(listOfBools[list_of_bools.index(operands[k])])
+                                operands.pop(k)
+                        else:
+                            k += 1
+                    if operator[open_paran - close_paran] == 'V':
+                        equation = Or([par for par in ran_list])
+                    elif operator[open_paran - close_paran] == 'A':
+                        equation = And([par for par in ran_list])
+                    elif operator[open_paran - close_paran] == 'N':
+                        equation = Not(ran_list[0])
+                        n_in_op = True
+                    elif operator[open_paran - close_paran] == 'I':
+                        equation = Implies([par for par in ran_list])
+                    elif operator[open_paran - close_paran] == 'X':
+                        equation = Xor([par for par in ran_list])
+                    operands.pop()
+                    operands.append(equation)
+                    operator.pop()
+                    s_in_op = False
+                else:  # not s_in_op and n_in_op
+                    ls = len(operands) - 1
+                    while ls >= 0:
+                        if type(operands[ls]) == str and operands[ls] == ' ':
+                            break
+                        ls -= 1
+                    po = ls + 1
+                    new_ops = []
+                    while po < len(operands):
+                        new_ops.append(operands[po])
+                        operands.pop(po)
+                    if operator[open_paran - close_paran] == 'V':
+                        equation = Or([par for par in new_ops])
+                    elif operator[open_paran - close_paran] == 'A':
+                        equation = And([par for par in new_ops])
+                    elif operator[open_paran - close_paran] == 'N':
+                        equation = Not(new_ops.pop())
+                        n_in_op = True
+                    elif operator[open_paran - close_paran] == 'I':
+                        equation = Implies([par for par in new_ops])
+                    elif operator[open_paran - close_paran] == 'X':
+                        equation = Xor([par for par in new_ops])
+                    operands.pop()
+                    operands.append(equation)
+                    operator.pop()
+            i += 1
+        elif F[i] == ' ':
+            i += 1
+    s = Solver()
+    s.add(equation)
+    t = s.check()
+    m = s.model()
+    print('HI')
+'''                elif n_in_op:
+                    ran_list_n = []
+                    k_n = 0
+                    while k_n < len(operands):
+                        if operands[k_n].decl().kind() == Z3_OP_NOT:
+                            ran_list_n.append(operands[k_n])
+                            operands.pop(k_n)
+                        else:
+                            k_n += 1
+                    if operator[open_paran - close_paran] == 'V':
+                        equation = Or([par for par in ran_list_n])
+                    elif operator[open_paran - close_paran] == 'A':
+                        equation = And([par for par in ran_list_n])
+                    elif operator[open_paran - close_paran] == 'N':
+                        equation = Not(ran_list_n[0])
+                        n_in_op = True
+                    elif operator[open_paran - close_paran] == 'I':
+                        equation = Implies([par for par in ran_list_n])
+                    elif operator[open_paran - close_paran] == 'X':
+                        equation = Xor([par for par in ran_list_n])
+                    operands.append(equation)
+                    operator.pop()
+                    n_in_op = False
+'''
 
 def add_to_subformula_list(formula_phi):  # add as you go any new subformula part as needed
     if formula_phi.data in ['exist_scheduler', 'forall_scheduler', 'exist', 'forall']:
@@ -604,6 +747,7 @@ def add_to_subformula_list(formula_phi):  # add as you go any new subformula par
         list_of_subformula.append(formula_phi)
         add_to_subformula_list(formula_phi.children[0])
     elif formula_phi.data in ['calc_probability']:
+        list_of_subformula.append(formula_phi)
         add_to_subformula_list(formula_phi.children[0])
     elif formula_phi.data in ['calc_until_bounded']:
         list_of_subformula.append(formula_phi)
@@ -622,7 +766,7 @@ def main_smt_encoding(model, formula_initial, formula):
         first_i = True
         sa = 'V('
         for action in state.actions:
-            act = "a_" + str(state.id) + " = " + str(action.id)  # a1 means action for state 1
+            act = "a_" + str(state.id) + "=" + str(action.id)  # a1 means action for state 1
             if "a_" + str(state.id) not in list_of_z3_variables:
                 list_of_z3_variables.append("a_" + str(state.id))
             if first_i:
@@ -698,7 +842,7 @@ if __name__ == '__main__':
     initial_prism_program = stormpy.parse_prism_program(path)
     initial_model = stormpy.build_model(initial_prism_program)
 
-    # try_z3()
+    #try_z3()
 
     parser = Lark(turtle_grammar)
     formula = sys.argv[2]
@@ -706,7 +850,7 @@ if __name__ == '__main__':
     result = main_smt_encoding(initial_model, parsed_formula_initial, formula)
 
 # mdp_example_and "ES sh . E s1 . E s2 . ( one(s1) & two(s2) )" s1 and s2 are dtmcs extended by using scheduler sh on the mdp example_and.nm
-# mdp_example_neg_const "ES sh . E s1 . E s2 . (P(X ( one(s1) & two(s2) ) > 3)"
+# mdp_example_neg_const "ES sh . E s1 . E s2 . (P(X ( one(s1) & two(s2) )) < 0.5)"
 # mdp_example_neg_const "ES sh . E s1 . E s2 . ~one(s1)"
 # mdp_example_neg_const "ES sh . E s1 . E s2 . (P(X ( one(s1) ) > 3)"
 # mdp_example_neg_const "ES sh . E s1 . E s2 . (P( one(s1) U[1,3] two(s2)) < 3)"
