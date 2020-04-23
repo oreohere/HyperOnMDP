@@ -1,3 +1,4 @@
+import csv
 import itertools
 import sys
 
@@ -49,6 +50,7 @@ turtle_grammar = """
 parser = None
 list_of_subformula = []
 list_of_z3_variables = []
+csvData = []
 
 
 def example_schedulers_01():
@@ -172,10 +174,10 @@ def SemanticsUnboundedUntil(model, formula_duplicate, combined_list_of_states, n
                 if 'prob_s' + str(combined_succ.index(cs)) + '_' + str(index_of_phi) not in list_of_z3_variables:
                     list_of_z3_variables.append('prob_s' + str(combined_succ.index(cs)) + '_' + str(index_of_phi))
             if first:
-                mul_clause += prod_left[0:len(prod_left)-1]
+                mul_clause += prod_left[0:len(prod_left) - 1]
                 first = False
             else:
-                mul_clause += prod_left[0:len(prod_left)-1] + ')'
+                mul_clause += prod_left[0:len(prod_left) - 1] + ')'
             prod_right = 'I(g(prob_' + str(combined_list_of_states.index(li)) + '_' + str(index_of_phi) + ' 0) '
             prod_right_or = 'V('
             for cs in combined_succ:
@@ -300,7 +302,7 @@ def SemanticsBoundedUntil(model, formula_duplicate, combined_list_of_states, n):
                     if 'prob_s' + str(combined_succ.index(cs)) + '_' + str(index_of_replaced) not in list_of_z3_variables:
                         list_of_z3_variables.append('prob_s' + str(combined_succ.index(cs)) + '_' + str(index_of_replaced))
                 if first:
-                    implies_antecedent += prod[0:len(prod)-1]
+                    implies_antecedent += prod[0:len(prod) - 1]
                     first = False
                 else:
                     implies_antecedent += prod[0:len(prod) - 1] + ')'
@@ -362,7 +364,7 @@ def SemanticsBoundedUntil(model, formula_duplicate, combined_list_of_states, n):
                     if 'prob_s' + str(combined_succ.index(cs)) + '_' + str(index_of_replaced) not in list_of_z3_variables:
                         list_of_z3_variables.append('prob_s' + str(combined_succ.index(cs)) + '_' + str(index_of_replaced))
                 if first:
-                    implies_antecedent += prod[0:len(prod)-1]
+                    implies_antecedent += prod[0:len(prod) - 1]
                     first = False
                 else:
                     implies_antecedent += prod[0:len(prod) - 1] + ')'
@@ -521,7 +523,7 @@ def Semantics(model, formula_duplicate, combined_list_of_states, n):
                     first = False
                 else:
                     mul_clause += prod[0:len(prod) - 1] + '))'
-                #implies_antecedent = '(' + mul_clause + ')'
+                # implies_antecedent = '(' + mul_clause + ')'
                 implies_antecedent = mul_clause
                 state_act_clause = 'I(' + implies_precedent + ' ' + implies_antecedent + ')'
                 result_string += state_act_clause + ' '
@@ -538,7 +540,7 @@ def Semantics(model, formula_duplicate, combined_list_of_states, n):
             result_string += 'prob_' + str(li[0]) + '_' + str(li[1]) + '_' + str(list_of_subformula.index(formula_duplicate)) + '=' + c + ' '
             if ('prob_' + str(li[0]) + '_' + str(li[1]) + '_' + str(list_of_subformula.index(formula_duplicate))) not in list_of_z3_variables:
                 list_of_z3_variables.append('prob_' + str(li[0]) + '_' + str(li[1]) + '_' + str(list_of_subformula.index(formula_duplicate)))
-        result_string = result_string[0:len(result_string)-1] + ')'
+        result_string = result_string[0:len(result_string) - 1] + ')'
     elif formula_duplicate.data in ['add_prob', 'minus_prob', 'mul_prob']:
         left = formula_duplicate.children[0]
         index_left = list_of_subformula.index(left)
@@ -652,7 +654,7 @@ def check(F):  # this will take the string F, convert it to z3 compatible equati
             if (op_space_index < op_brac_index and op_space_index != -1) or op_brac_index == -1:
                 operands.append(F[i:op_space_index])
                 i = op_space_index
-            else:    #if (op_space_index > op_brac_index and op_brac_index != -1) or op_space_index == -1:
+            else:  # if (op_space_index > op_brac_index and op_brac_index != -1) or op_space_index == -1:
                 operands.append((F[i:op_brac_index]))
                 i = op_brac_index
         elif F[i] == ')':
@@ -662,7 +664,7 @@ def check(F):  # this will take the string F, convert it to z3 compatible equati
                 if s_in_op:
                     ran_list = []
                     k = 0
-                    for k in range(len(operands)-1, 0, -1):
+                    for k in range(len(operands) - 1, 0, -1):
                         if type(operands[k]) == str and operands[k] == ' ':
                             break
                     k += 1
@@ -678,7 +680,11 @@ def check(F):  # this will take the string F, convert it to z3 compatible equati
                                 ran_list.append(listOfBools[list_of_bools.index(operands[k])])
                                 operands.pop(k)
                             elif operands[k][0] == 'd':
-                                print('d is here')
+                                g_index = operands[k].find('>', 0)
+                                name1 = operands[k][0:g_index]
+                                name2 = operands[k][g_index + 1:]
+                                ran_list.append(listOfReals[list_of_reals.index(name1)] > listOfReals[list_of_reals.index(name2)])
+                                operands.pop(k)
                             elif operands[k][0] == 'p':
                                 eq_index = operands[k].find('=', 0)
                                 if eq_index == -1:
@@ -696,7 +702,7 @@ def check(F):  # this will take the string F, convert it to z3 compatible equati
                         else:
                             ran_list.append(operands[k])
                             operands.pop(k)
-                            #k += 1
+                            # k += 1
                     if operator[open_paran - close_paran] == 'V':
                         equation = Or([par for par in ran_list])
                     elif operator[open_paran - close_paran] == 'A':
@@ -768,16 +774,21 @@ def check(F):  # this will take the string F, convert it to z3 compatible equati
             i += 1
     s = Solver()
     s.add(equation)
+    csvData.append([equation])
     t = s.check()
     m = s.model()
-    print('HI')
+    csvData.append([m])
+    if t.r == 1:
+        return True
+    elif t.r == -1:
+        return False
 
 
 def add_to_subformula_list(formula_phi):  # add as you go any new subformula part as needed
     if formula_phi.data in ['exist_scheduler', 'forall_scheduler', 'exist', 'forall']:
         formula_phi = formula_phi.children[1]
         add_to_subformula_list(formula_phi)
-    elif formula_phi.data in ['and_op', 'less_prob', 'add_prob', 'minus_prob', 'mul_prob', 'calc_until_unbounded']:
+    elif formula_phi.data in ['and_op', 'less_prob', 'add_prob', 'minus_prob', 'mul_prob', 'calc_until_unbounded', 'equal_prob']:
         list_of_subformula.append(formula_phi)
         left_child = formula_phi.children[0]
         add_to_subformula_list(left_child)
@@ -823,10 +834,8 @@ def main_smt_encoding(model, formula_initial, formula):
         else:
             F += " " + sa
     F += ')'
-    add_to_subformula_list(formula_initial)
-
-    formula_duplicate = formula_initial
     n = 0
+    formula_duplicate = formula_initial
     while len(formula_duplicate.children) > 0 and type(formula_duplicate.children[0]) == Token:
         if formula_duplicate.data in ['exist_scheduler', 'forall_scheduler']:
             formula_duplicate = formula_duplicate.children[1]
@@ -836,19 +845,21 @@ def main_smt_encoding(model, formula_initial, formula):
     for state in model.states:
         list_of_states.append(state.id)
     combined_list_of_states = list(itertools.product(list_of_states, repeat=n))
-
-    semantics_result = Semantics(model, formula_duplicate, combined_list_of_states, n)
-
     if formula_initial.data == 'exist_scheduler':
+        add_to_subformula_list(formula_initial)
         truth_result = Truth(model, formula_initial, combined_list_of_states, n)
+        semantics_result = Semantics(model, formula_duplicate, combined_list_of_states, n)
         F = "A(" + F + " " + semantics_result + " " + truth_result + ")"
+        csvData.append([F])
         if check(F):
             return True
         else:
             return False
+
     elif formula_initial.data == 'forall_scheduler':
         new_formula = ''
         i = 0
+        first = True
         while i < len(formula):
             if formula[i] == 'E':
                 if formula[i + 1] == 'S':
@@ -865,12 +876,25 @@ def main_smt_encoding(model, formula_initial, formula):
                     new_formula += 'E' + formula[i + 1]
                     i += 2
             else:
-
+                if first and formula[i - 1] == ' ' and formula[i - 2] == '.':
+                    new_formula += '~'
+                    first = False
                 new_formula += formula[i]
                 i += 1
         new_parsed_formula = parser.parse(new_formula)
+        formula_duplicate = new_parsed_formula
+        n = 0
+        while len(formula_duplicate.children) > 0 and type(formula_duplicate.children[0]) == Token:
+            if formula_duplicate.data in ['exist_scheduler', 'forall_scheduler']:
+                formula_duplicate = formula_duplicate.children[1]
+            elif formula_duplicate.data in ['exist', 'forall']:
+                n += 1
+                formula_duplicate = formula_duplicate.children[1]
+        add_to_subformula_list(new_parsed_formula)
+        semantics_result = Semantics(model, formula_duplicate, combined_list_of_states, n)
         truth_result = Truth(model, new_parsed_formula, combined_list_of_states, n)
         F = 'A(' + F + ' ' + semantics_result + ' ' + truth_result + ')'
+        csvData.append([F])
         if check(F):
             return False
         else:
@@ -885,16 +909,27 @@ if __name__ == '__main__':
     initial_prism_program = stormpy.parse_prism_program(path)
     initial_model = stormpy.build_model(initial_prism_program)
 
-    #try_z3()
+    # try_z3()
 
     parser = Lark(turtle_grammar)
     formula = sys.argv[2]
     parsed_formula_initial = parser.parse(formula)
-    result = main_smt_encoding(initial_model, parsed_formula_initial, formula)
+    with open('resultdiffprivy.csv', 'w') as csvFile:
+        writer = csv.writer(csvFile, delimiter=',')
+        row = [formula]
+        csvData.append(row)
+        row = ['-----------------------------------------------------']
+        csvData.append(row)
+        result = main_smt_encoding(initial_model, parsed_formula_initial, formula)
+        writer.writerows(csvData)
+    csvFile.close()
+    print(result)
 
 # mdp_example_and "ES sh . E s1 . E s2 . ( one(s1) & two(s2) )" s1 and s2 are dtmcs extended by using scheduler sh on the mdp example_and.nm
 # mdp_example_neg_const "ES sh . E s1 . E s2 . (P(X ( one(s1) & two(s2) )) < 0.5)"
 # mdp_example_neg_const "ES sh . E s1 . E s2 . ~one(s1)"
 # mdp_example_neg_const "ES sh . A s1 . E s2 . (P(X one(s1)) < 0.5)"
 # mdp_example_neg_const "ES sh . E s1 . E s2 . (P( one(s1) U[1,3] two(s2)) < 3)"
-# G = greater than equal, g = greater, M = multiplication, P = plus, S = substraction
+# G = greater than equal, g = greater, M = multiplication, P = plus, S = subtraction, E = equal, L = less than
+
+# mdp_cancer "ES sh . E s1 . E s2 . (P( true U finish(s1) ) < 0.5)"

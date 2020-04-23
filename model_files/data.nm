@@ -1,0 +1,42 @@
+//-------------------------------------------------------------
+// model is an mdp
+mdp
+
+module medical_database
+	
+	q0 : [0..1]; // Attacker performs query 0: P0 is a patient ?
+        a0 : [0..1]; // Answer to query 0: 1 - P0 is a patient, 0 - P0 is not a patient 
+	q1 : [0..1]; // Attacker performs query 1: Does P0 smoke ?
+        a1 : [0..1]; // Answer to query 1: 0 - P0 smokes, 1 - P0 does not smoke.
+
+        bc : [0..1]; // Belief of the attacker that patient P0 has a cancer. 0 - P0 has not cancer, 1 - P0 has cancer
+        bh : [0..1]; // Belief of the attacker that patient P0 has heart disease. 0 - P0 has an heart disease, P0 has not an heart disease.
+        
+
+        [query_0_patient_P0_found]          (q0=0) -> (0.05 + a1*0.25)       * (0.10 + a1*0.30)           : (q0'=1) & (a0'=1) & (bc'=1) & (bh'=1) + 
+                                                      (0.05 + a1*0.25)       * (1 - (0.10 + a1*0.30))     : (q0'=1) & (a0'=1) & (bc'=1) & (bh'=0) + 
+                                                      (1 - (0.05 + a1*0.25)) * (0.10 + a1*0.30)           : (q0'=1) & (a0'=1) & (bc'=0) & (bh'=1) + 
+                                                      (1 - (0.05 + a1*0.25)) * (1 - (0.10 + a1*0.30))     : (q0'=1) & (a0'=1) & (bc'=0) & (bh'=0);
+
+
+	[query_0_patient_P0_not_found]      (q0=0) -> (a1*0.25)       * (a1*0.30)           : (q0'=1) & (a0'=0) & (bc'=1) & (bh'=1) + 
+                                                      (a1*0.25)       * (1 - (a1*0.30))     : (q0'=1) & (a0'=0) & (bc'=1) & (bh'=0) + 
+                                                      (1 - (a1*0.25)) * (a1*0.30)           : (q0'=1) & (a0'=0) & (bc'=0) & (bh'=1) + 
+                                                      (1 - (a1*0.25)) * (1 - (a1*0.30))     : (q0'=1) & (a0'=0) & (bc'=0) & (bh'=0);
+
+        [query_1_patient_P0_smokes]         (q1=0) -> (0.05*a0 + 0.25)       * (0.10*a0 + 0.30)       : (q1'=1) & (a1'=1) & (bc'=1) & (bh'=1) + 
+                                                      (0.05*a0 + 0.25)       * (1 - (0.10*a0 + 0.30)) : (q1'=1) & (a1'=1) & (bc'=1) & (bh'=0) + 
+                                                      (1 - (0.05*a0 + 0.25)) * (0.10*a0 + 0.30)       : (q1'=1) & (a1'=1) & (bc'=0) & (bh'=1) +
+                                                      (1 - (0.05*a0 + 0.25)) * (1 - (0.10*a0 + 0.30)) : (q1'=1) & (a1'=1) & (bc'=0) & (bh'=0);
+
+	[query_1_patient_P0_does_not_smoke] (q1=0) -> (0.05*a0)       * (0.10*a0)       : (q1'=1) & (a1'=0) & (bc'=1) & (bh'=1) + 
+                                                      (0.05*a0)       * (1 - (0.10*a0)) : (q1'=1) & (a1'=0) & (bc'=1) & (bh'=0) + 
+                                                      (1 - (0.05*a0)) * (0.10*a0)       : (q1'=1) & (a1'=0) & (bc'=0) & (bh'=1) +
+                                                      (1 - (0.05*a0)) * (1 - (0.10*a0)) : (q1'=1) & (a1'=0) & (bc'=0) & (bh'=0);
+
+
+
+	[] (q0=1) & (q1=1) -> (q0'=1) & (q1'=1);
+endmodule
+
+init  (q0=0) & (q1=0) & (a0=0) & (a1=0)     endinit

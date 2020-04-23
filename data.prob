@@ -1,0 +1,8 @@
+// Minimum probability that a leader is eventually elected
+Pmax=? [ F (q0=1) & (q1=1) & (bc=1) ]
+
+Pmax = ? [ F ((q0=1) & (q1=1) & (bh=1)) ]
+
+// Minimum probability that a leader is eventually elected
+Pmax=? [ F (bc=1) ]
+
