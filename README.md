@@ -1,4 +1,4 @@
 # HyperOnMDP
 Verifying Hyperproperties on MDP
 
-add_to_subformula_list()- add to this whenever trying new formula to add in list recursively along with its children
+G = greater than equal, g = greater, M = multiplication, P = plus, S = subtraction, E = equal, L = less than equal, l = less
