@@ -1,0 +1,6 @@
+// Minimum probability that a leader is eventually elected
+Pmax=? [ F "all_queries"&"p0_has_cancer" ]
+
+// Minimum probability that a leader is eventually elected
+Pmax=? [ F "all_queries"&"p1_has_cancer" ]
+

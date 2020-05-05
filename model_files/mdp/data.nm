@@ -41,4 +41,5 @@ endmodule
 
 init  (q0=0) & (q1=0) & (a0=0) & (a1=0)     endinit
 
-label "bcy" = bc=1;
+label "bcy" = q0=1 & q1=1 & bc=1;
+label "bhy" = q0=1 & q1=1 & bh=1;
