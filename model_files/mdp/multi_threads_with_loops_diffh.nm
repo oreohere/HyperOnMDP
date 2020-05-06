@@ -1,13 +1,15 @@
 mdp
 
-const int n = 15;
+const int n1 = 5;
+const int n2 = 1;
 
 module thread_secret
 
-	h : [0..n];
+	h : [0..n1];
         l : [0..2];
         f1 : [0..1];
         f2 : [0..1];
+
 
         [alpha]  (h>0)&(l=0)  -> 1/2  : (h'=h-1) + 1/2 : (l'=2)&(f2'=1);
         [alpha]  (h=0)&(l=0)  -> 1/2  : (l'=1)&(f1'=1)   + 1/2 : (l'=2)&(f2'=1);
@@ -25,13 +27,14 @@ module thread_secret
        // [schedule] (l=1)& (h=0)  -> 1 : (l'=1)& (h'=0) ;
        // [schedule] (l=2)& (h=0)  -> 1 : (l'=2)& (h'=0) ;
 
+
 endmodule
 
 //init  (h=n)&(l=0) endinit
-init (l=0)&(f1=0)&(f2=0)&(h=n)  endinit
+init (l=0)&(f1=0)&(f2=0)&(h=n1)  endinit
 
-label "he0" = (h=0)&(l=0);
-label "hg0" = (h>0)&(l=0);
+label "h1" = (h=n1)&(l=0);
+label "h2" = (h=n2)&(l=0);
 label "l_1" = l=1;
 label "l_2" = l=2;
 label "terminated_l1" = (f1=1);

@@ -1,6 +1,7 @@
 import csv
 import itertools
 import sys
+import time
 
 import stormpy
 import files
@@ -685,6 +686,7 @@ def check(F):  # this will take the string F, convert it to z3 compatible equati
     listOfBools = []
     list_of_ints = []
     listOfInts = []
+    no_of_subformula = 0
 
     for name in list_of_z3_variables:
         if name[0] == 'h':
@@ -712,6 +714,7 @@ def check(F):  # this will take the string F, convert it to z3 compatible equati
         if F[i] in ['A', 'V', 'I', 'N', 'X', 'E', 'P', 'M', 'S', 'L', 'l', 'G', 'g', 'e']:
             operator.append(F[i])
             i += 1
+            no_of_subformula += 1
         elif F[i] == '(':
             open_paran += 1
             operands.append(' ')
@@ -845,10 +848,12 @@ def check(F):  # this will take the string F, convert it to z3 compatible equati
         elif F[i] == ' ':
             i += 1
     # csvData.append(toSMT2Benchmark(equation, logic="QF_LIA"))
+    starting = time.process_time()
     s = Solver()
     s.add(equation)
     # csvData.append(equation)
     t = s.check()
+    print("Time required by z3: " + str(time.process_time() - starting))
     if t == sat:
         m = s.model()
         li_h = dict()
@@ -865,6 +870,10 @@ def check(F):  # this will take the string F, convert it to z3 compatible equati
                 li_a[li.name()] = m[li]
                 print(str(li.name()) + '=' + str(m[li]))
         # csvData.append([m])
+    print(s.statistics())
+    print("\n")
+    print("Number of variables: " + str(len(list_of_ints) + len(list_of_reals) + len(list_of_bools)))
+    print("Number of formula checked: " + str(no_of_subformula))
     if t.r == 1:
         return True
     elif t.r == -1:
@@ -907,6 +916,7 @@ def main_smt_encoding(model, formula_initial, formula):
     list_of_states = []
     F = 'A('
 
+    starttime = time.process_time()
     for state in model.states:
         first_i = True
         sa = 'V('
@@ -991,6 +1001,8 @@ def main_smt_encoding(model, formula_initial, formula):
         semantics_result = Semantics(model, formula_duplicate, combined_list_of_states, n)
         F = 'A(' + F + ' ' + semantics_result + ' ' + truth_result + ')'
         print("Calling check...")
+        smt_end_time = time.process_time() - starttime
+        print("Time to encode: " + str(smt_end_time))
         # csvData.append([F])
         if check(F):
             return False
@@ -1023,6 +1035,7 @@ if __name__ == '__main__':
     #     csvData.append(row)
     #     row = ['-----------------------------------------------------']
     #     csvData.append(row)
+
     result = main_smt_encoding(initial_model, parsed_formula_initial, formula)
     #     writer.writerows(csvData)
     # csvFile.close()
@@ -1037,11 +1050,17 @@ if __name__ == '__main__':
 # mdp_example_neg_const "ES sh . A s1 . E s2 . (P(X one(s1)) < 0.5)"
 # mdp_example_neg_const "ES sh . E s1 . E s2 . (P( one(s1) U[1,3] two(s2)) < 3)"
 
-# mdp_data "AS sh . A s1 . A s1 . (P( true U bcy(s1)) > P(true U bhy(s1)))"
-# mdp_data "AS sh . A s1 . A s1 . (P( true U bcy(s1)) > 0)
-# mdp_dabasev2 "AS sh . A s1 . A s1 . (P( true U (all_queries(s1) & p0_has_cancer(s1))) > P(true U(all_queries(s1) & p1_has_cancer(s1))))"
-# mdp_DatabaseOnlyCancer2Patients "AS sh . A s1 . A s1 . (P( true U (all_queries(s1) & belief_p0_has_cancer(s1))) > P(true U(all_queries(s1) & belief_p1_has_cancer(s1))))"
-# mdp_multi_threads "AS sh . A s1 . A s1 . ~((hg0(s1) & hle0(s2)) & ~((P(true U l_1(s1)) = P(true U l_1(s2))) & (P(true U l_2(s1)) = P(true U l_2(s2)))))"
+# mdp_data "AS sh . A s1 . A s2 . (P( true U bcy(s1)) > P(true U bhy(s1)))"
+# mdp_data "AS sh . A s1 . A s2 . (P( true U bcy(s1)) > 0)
+# mdp_dabasev2 "AS sh . A s1 . A s2 . (P( true U (all_queries(s1) & p0_has_cancer(s1))) > P(true U(all_queries(s1) & p1_has_cancer(s1))))"
+# mdp_DatabaseOnlyCancer2Patients "AS sh . A s1 . A s2 . (P( true U (all_queries(s1) & belief_p0_has_cancer(s1))) > P(true U(all_queries(s1) & belief_p1_has_cancer(s1))))"
+# mdp_multi_threads "AS sh . A s1 . A s2 . ~((hg0(s1) & hle0(s2)) & ~((P(true U l_1(s1)) = P(true U l_1(s2))) & (P(true U l_2(s1)) = P(true U l_2(s2)))))"
+
+# mdp_multi_threads_with_loops "AS sh . A s1 . A s2 . ~((he0(s1) & hg0(s2)) & ~((P(true U l_1(s1)) = P(true U l_1(s2))) & (P(true U l_2(s1)) = P(true U l_2(s2)))))"
+
+# mdp_multi_threads_with_loops "AS sh . A s1 . A s2 . ~((he0(s1) & hg0(s2)) & ~((P(true U (l_1(s1) & terminated(s1))) = P(true U (l_1(s2)& terminated(s2)))) & (P(true U (l_2(s1)& terminated(s1))) = P(true U (l_2(s2) & terminated(s2))))))"
+# mdp_multi_threads_with_loops_diffh "AS sh . A s1 . A s2 . ~((h1(s1) & h2(s2)) & ~((P(true U (l_1(s1) & terminated(s1))) = P(true U (l_1(s2)& terminated(s2)))) & (P(true U (l_2(s1)& terminated(s1))) = P(true U (l_2(s2) & terminated(s2))))))"
+
 
 # label "all_queries" = p0_q0=1&p0_q1=1&p0_p1_q2=1&p1_q0=1&p1_q1=1&p1_p0_q2=1;
 # label "p0_has_cancer" = p0_bc=1;
