@@ -1017,10 +1017,14 @@ if __name__ == '__main__':
     print(path)
     initial_prism_program = stormpy.parse_prism_program(path)
     initial_model = stormpy.build_model(initial_prism_program)
+    print("No of state: " + str(len(initial_model.states)))
+    tar = 0
     for state in initial_model.states:
         for action in state.actions:
             for tran in action.transitions:
-                print("hi")
+                tar += 1
+    print("Total transitions: " + str(tar))
+
     lab = initial_model.labeling
     for state in initial_model.states:
         print(lab.get_labels_of_state(state.id))
