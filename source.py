@@ -454,7 +454,7 @@ def Semantics(model, formula_duplicate, combined_list_of_states, n):
     elif formula_duplicate.data == 'var':  # var handles the inside varname
         list_of_state_with_ap = []
         ap_name = formula_duplicate.children[0].children[0].value
-        print("Done with var " + str(ap_name))
+        # print("Done with var " + str(ap_name))
         ap_state = formula_duplicate.children[0].children[1].value[1]
         labeling = model.labeling
         and_for_yes = 'A('
@@ -1065,6 +1065,7 @@ if __name__ == '__main__':
 # mdp_multi_threads_with_loops "AS sh . A s1 . A s2 . ~((he0(s1) & hg0(s2)) & ~((P(true U (l_1(s1) & terminated(s1))) = P(true U (l_1(s2)& terminated(s2)))) & (P(true U (l_2(s1)& terminated(s1))) = P(true U (l_2(s2) & terminated(s2))))))"
 # mdp_multi_threads_with_loops_diffh "AS sh . A s1 . A s2 . ~((h1(s1) & h2(s2)) & ~((P(true U (l_1(s1) & terminated(s1))) = P(true U (l_1(s2)& terminated(s2)))) & (P(true U (l_2(s1)& terminated(s1))) = P(true U (l_2(s2) & terminated(s2))))))"
 
+# mdp_timimg_attach "AS sh . A s1 . A s2 . ~((start(s1) & start(s2)) & ~(P(true U counter0(s1)) = P(true U counter0(s2))))
 
 # label "all_queries" = p0_q0=1&p0_q1=1&p0_p1_q2=1&p1_q0=1&p1_q1=1&p1_p0_q2=1;
 # label "p0_has_cancer" = p0_bc=1;
