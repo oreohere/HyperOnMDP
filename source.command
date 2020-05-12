@@ -1,3 +1,5 @@
+#!/Users/oreo/.pyenv/shims/python
+
 import csv
 import itertools
 import sys
@@ -1055,10 +1057,7 @@ def main_smt_encoding(model, formula_initial, formula):
         print("Calling Semantics...")
         semantics_result = Semantics(model, formula_duplicate, combined_list_of_states, n)
         F = "A(" + F + " " + semantics_result + " " + truth_result + ")"
-        # csvData.append([F])
-        smt_end_time = time.process_time() - starttime
-        print("Time to encode: " + str(smt_end_time))
-        print("Calling check...")
+        csvData.append([F])
         if check(F):
             return True
         else:
@@ -1104,9 +1103,9 @@ def main_smt_encoding(model, formula_initial, formula):
         print("Calling Semantics...")
         semantics_result = Semantics(model, formula_duplicate, combined_list_of_states, n)
         F = 'A(' + F + ' ' + semantics_result + ' ' + truth_result + ')'
+        print("Calling check...")
         smt_end_time = time.process_time() - starttime
         print("Time to encode: " + str(smt_end_time))
-        print("Calling check...")
         # csvData.append([F])
         if check(F):
             return False
@@ -1172,11 +1171,6 @@ if __name__ == '__main__':
 # mdp_timimg_attach "AS sh . A s1 . A s2 . ~((start(s1) & start(s2)) & ~(P(true U counter0(s1)) = P(true U counter0(s2))))
 # mdp_timing_attack5 "AS sh . A s1 . A s2 . ~((start0(s1) & start1(s2)) & ~(P(true U counter0(s1)) = P(true U counter0(s2))))"
 
-# mdp_database_rev2 " AS sh . A s1 . A s2 . ~((start1(s1) & start2(s2)) & ~(P(F cancer_p1(s1)) = P(F cancer_p1(s2))))"
-
-# mdp_synthesis "ES sh . A s1 . E s2 . ~((start1(s1) & start2(s2)) & ~((P(F die1(s1)) = P(F die1(s2))) & (P(F die2(s1)) = P(F die2(s2)))))"
-
-# mdp_synthesis_simplified ES sh . A s1 . E s2 . ~((start1(s1) & start2(s2)) & ~((P(F die1(s1)) = P(F die1(s2))) & ((P(F die2(s1)) = P(F die2(s2))) & ((P(F die3(s1)) = P(F die3(s2))) & ((P(F die4(s1)) = P(F die4(s2))) & ((P(F die5(s1)) = P(F die5(s2))) & (P(F die6(s1)) = P(F die6(s2))) ) ) ) ) ) )"
 
 
 # label "all_queries" = p0_q0=1&p0_q1=1&p0_p1_q2=1&p1_q0=1&p1_q1=1&p1_p0_q2=1;

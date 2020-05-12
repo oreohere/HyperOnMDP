@@ -1,0 +1,52 @@
+//-------------------------------------------------------------
+// model is an mdp
+mdp
+
+const double smoking_prob = 0.25;
+const double patient_prob = 0.05;
+const double parent_prob  = 0.15;
+
+module patient_record
+
+	 p1  : [0..1]; 
+        qp1  : [0..1]; 
+         s1  : [0..1];
+        qs1  : [0..1];
+        pp1  : [0..2];
+       qpp1  : [0..1];
+         c1  : [0..1];
+         a1  : [0..1];
+         
+
+
+        [patient_p1]                 (p1=0)&(qp1=0)&(a1=0) -> patient_prob    + smoking_prob*s1  + pp1*parent_prob : (p1'=1)&(c1'=1)&(qp1'=1)          + 1 - (patient_prob +    smoking_prob*s1 + pp1*parent_prob) : (p1'=1)&(c1'=0)&(qp1'=1);
+        [not_patient_p1]             (p1=0)&(qp1=0)&(a1=0) ->                   smoking_prob*s1  + pp1*parent_prob : (p1'=0)&(c1'=1)&(qp1'=1)          + 1 - (                  smoking_prob*s1 + pp1*parent_prob) : (p1'=0)&(c1'=0)&(qp1'=1);
+        [smoking_p1]                 (s1=0)&(qs1=0)&(a1=0) -> patient_prob*p1 + smoking_prob     + pp1*parent_prob : (s1'=1)&(c1'=1)&(qs1'=1)          + 1 - (patient_prob*p1 + smoking_prob    + pp1*parent_prob) : (s1'=1)&(c1'=0)&(qs1'=1);
+        [not_smoking_p1]             (s1=0)&(qs1=0)&(a1=0) -> patient_prob*p1                    + pp1*parent_prob : (s1'=0)&(c1'=1)&(qs1'=1)          + 1 - (patient_prob*p1                   + pp1*parent_prob) : (s1'=0)&(c1'=0)&(qs1'=1);
+        [parent_of_p1]             (pp1=0)&(qpp1=0)&(a1=0) -> patient_prob*p1 + smoking_prob*s1  +     parent_prob : (pp1'=1)&(c1'=1)&(qpp1'=1)        + 1 - (patient_prob*p1 + smoking_prob*s1 +     parent_prob) : (pp1'=1)&(c1'=0)&(qpp1'=1);
+        [parents_of_p1]            (pp1=0)&(qpp1=0)&(a1=0) -> patient_prob*p1 + smoking_prob*s1  +   2*parent_prob : (pp1'=2)&(c1'=1)&(qpp1'=1)        + 1 - (patient_prob*p1 + smoking_prob*s1 +   2*parent_prob) : (pp1'=2)&(c1'=0)&(qpp1'=1);
+        [no_parents_of_p1]         (pp1=0)&(qpp1=0)&(a1=0) -> patient_prob*p1 + smoking_prob*s1                    : (pp1'=0)&(c1'=1)&(qpp1'=1)        + 1 - (patient_prob*p1 + smoking_prob*s1                  ) : (pp1'=0)&(c1'=0)&(qpp1'=1);
+
+        [patient_p1]                 (p1=0)&(qp1=0)&(a1=1) -> patient_prob    + smoking_prob*s1  + pp1*parent_prob : (p1'=1)&(c1'=1)&(qp1'=1)          + 1 - (patient_prob +    smoking_prob*s1 + pp1*parent_prob) : (p1'=1)&(c1'=0)&(qp1'=1);
+        [not_patient_p1]             (p1=0)&(qp1=0)&(a1=1) ->                   smoking_prob*s1  + pp1*parent_prob : (p1'=0)&(c1'=1)&(qp1'=1)          + 1 - (                  smoking_prob*s1 + pp1*parent_prob) : (p1'=0)&(c1'=0)&(qp1'=1);
+        [smoking_p1]                 (s1=0)&(qs1=0)&(a1=1) -> patient_prob*p1 + smoking_prob     + pp1*parent_prob : (s1'=1)&(c1'=1)&(qs1'=1)          + 1 - (patient_prob*p1 + smoking_prob    + pp1*parent_prob) : (s1'=1)&(c1'=0)&(qs1'=1);
+        [not_smoking_p1]             (s1=0)&(qs1=0)&(a1=1) -> patient_prob*p1                    + pp1*parent_prob : (s1'=0)&(c1'=1)&(qs1'=1)          + 1 - (patient_prob*p1                   + pp1*parent_prob) : (s1'=0)&(c1'=0)&(qs1'=1);
+        [parent_of_p1]             (pp1=0)&(qpp1=0)&(a1=1) -> patient_prob*p1 + smoking_prob*s1  +     parent_prob : (pp1'=1)&(c1'=1)&(qpp1'=1)        + 1 - (patient_prob*p1 + smoking_prob*s1 +     parent_prob) : (pp1'=1)&(c1'=0)&(qpp1'=1);
+        [parents_of_p1]            (pp1=0)&(qpp1=0)&(a1=1) -> patient_prob*p1 + smoking_prob*s1  +   2*parent_prob : (pp1'=2)&(c1'=1)&(qpp1'=1)        + 1 - (patient_prob*p1 + smoking_prob*s1 +   2*parent_prob) : (pp1'=2)&(c1'=0)&(qpp1'=1);
+        [no_parents_of_p1]         (pp1=0)&(qpp1=0)&(a1=1) -> patient_prob*p1 + smoking_prob*s1                    : (pp1'=0)&(c1'=1)&(qpp1'=1)        + 1 - (patient_prob*p1 + smoking_prob*s1                  ) : (pp1'=0)&(c1'=0)&(qpp1'=1);
+ 
+
+        [no_query]    true -> true; 
+       
+endmodule
+
+//init (c1=0)&(p1=0)&(s1=0)&(qp1=0)&(qs1=0)&(pp1=0)&(qpp1=0)&(a1=0) endinit
+init (c1=0)&(p1=0)&(s1=0)&(qp1=0)&(qs1=0)&(pp1=0)&(qpp1=0) endinit
+
+//label "all_queries" = p0_q0=1&p0_q1=1&p0_p1_q2=1&p1_q0=1&p1_q1=1&p1_p0_q2=1;
+
+label "start1"     = (c1=0)&(p1=0)&(s1=0)&(qp1=0)&(qs1=0)&(pp1=0)&(qpp1=0)&(a1=0);
+label "start2"     = (c1=0)&(p1=0)&(s1=0)&(qp1=0)&(qs1=0)&(pp1=0)&(qpp1=0)&(a1=1);
+
+label "cancer_p1"  = (c1=1)&(qp1=1)&(qs1=1)&(qpp1=1);
+
