@@ -1,3 +1,4 @@
+The final result gives a boolean value as to whether the given property is satisfied by the MDP, and a counterexample or a witness, if possible, by printing the action taken at each state of the mdp to give a dtmc. In the result a_i refers to the action taken in the ith state.  
 The following are the details of the experiments as mentioned in the paper:
 
 1) TA: Timing attack experiment, explained as the first case study in the paper. The following refer to the arguments used for 3 different trials with m ={2,4,6}
