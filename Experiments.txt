@@ -1,4 +1,10 @@
 The following are the details of the experiments as mentioned in the paper:
 
-1) TA: Timing attack experiment, explained a sthe first case study in the paper. The 
+1) TA: Timing attack experiment, explained as the first case study in the paper.
+
+2) PW: Password leakage experiment, explained as the second case study in the paper.
+
+3) TS: Thread scheduler experiment, explained as the third case study in the paper.
+
+4) PC: Probabilistic conformance, explained as the fourth case study in the paper.
 
