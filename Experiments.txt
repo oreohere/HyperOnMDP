@@ -1,8 +1,16 @@
 The following are the details of the experiments as mentioned in the paper:
 
-1) TA: Timing attack experiment, explained as the first case study in the paper.
+1) TA: Timing attack experiment, explained as the first case study in the paper. The following refer to the arguments used for 3 different trials with m ={2,4,6}
 
-2) PW: Password leakage experiment, explained as the second case study in the paper.
+  ---- mdp_TA_timing_attack2 "AS sh . A s1 . A s2 . ~((start0(s1) & start1(s2)) & ~(P(F counter0(s1)) = P(F counter0(s2))))"
+  ---- mdp_TA_timing_attack4 "AS sh . A s1 . A s2 . ~((start0(s1) & start1(s2)) & ~(P(F counter0(s1)) = P(F counter0(s2))))"
+  ---- mdp_TA_timing_attack6 "AS sh . A s1 . A s2 . ~((start0(s1) & start1(s2)) & ~(P(F counter0(s1)) = P(F counter0(s2))))"
+
+2) PW: Password leakage experiment, explained as the second case study in the paper. The following refer to the arguments used for 3 different trials with m ={2,4,6}
+
+  ---- mdp_PW_password_leakage2 "AS sh . A s1 . A s2 . ~((start0(s1) & start1(s2)) & ~(P(F counter0(s1)) = P(F counter0(s2))))"
+  ---- mdp_PW_password_leakage4 "AS sh . A s1 . A s2 . ~((start0(s1) & start1(s2)) & ~(P(F counter0(s1)) = P(F counter0(s2))))"
+  ---- mdp_PW_password_leakage6 "AS sh . A s1 . A s2 . ~((start0(s1) & start1(s2)) & ~(P(F counter0(s1)) = P(F counter0(s2))))"
 
 3) TS: Thread scheduler experiment, explained as the third case study in the paper.
 
