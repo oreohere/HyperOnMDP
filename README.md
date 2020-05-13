@@ -3,7 +3,7 @@ Verifying Hyperproperties on MDP
 
 This script uses python 3, however, it has a few depencies:
 
---Carl(https://smtrat.github.io/carl)
+-- Carl(https://smtrat.github.io/carl)
 
 -- Pycarl(https://moves-rwth.github.io/pycarl)
 
