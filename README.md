@@ -15,8 +15,8 @@ The above libraries have their own dependencies which need to be resolved first.
 
 The arguments that the script needs are as follows:
 
-1)the path of the model file
+1) Path of the model file
 
-2)property used on the model
+2) Property used on the model
 
 The details of the experiments have been provided in https://github.com/oreohere/HyperOnMDP/blob/master/Experiments.txt
