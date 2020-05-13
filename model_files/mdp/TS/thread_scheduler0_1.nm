@@ -1,7 +1,7 @@
 mdp
 
-const int n1 = 15; //should be always greater
-const int n2 = 8;
+const int n1 = 1; //should be always greater than n2
+const int n2 = 0;
 
 module thread_secret
 

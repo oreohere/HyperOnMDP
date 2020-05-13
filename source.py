@@ -1054,8 +1054,8 @@ def main_smt_encoding(model, formula_initial, formula):
 if __name__ == '__main__':
     part_path = sys.argv[1]
     folder_file = part_path.split('_', 1)
-    subfolder_file = folder_file.split('_', 1)
-    path = files._path(folder_file[0], folder_file[1] + ".nm")
+    subfolder_file = folder_file[1].split('_', 1)
+    path = files._path(folder_file[0], subfolder_file[0], subfolder_file[1] + '.nm')
     print(path)
     initial_prism_program = stormpy.parse_prism_program(path)
     initial_model = stormpy.build_model(initial_prism_program)
@@ -1070,7 +1070,6 @@ if __name__ == '__main__':
     lab = initial_model.labeling
     for state in initial_model.states:
         print(lab.get_labels_of_state(state.id))
-    # try_z3()
 
     parser = Lark(turtle_grammar)
     formula = sys.argv[2]
