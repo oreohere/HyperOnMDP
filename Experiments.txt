@@ -12,7 +12,15 @@ The following are the details of the experiments as mentioned in the paper:
   ---- mdp_PW_password_leakage4 "AS sh . A s1 . A s2 . ~((start0(s1) & start1(s2)) & ~(P(F counter0(s1)) = P(F counter0(s2))))"
   ---- mdp_PW_password_leakage6 "AS sh . A s1 . A s2 . ~((start0(s1) & start1(s2)) & ~(P(F counter0(s1)) = P(F counter0(s2))))"
 
-3) TS: Thread scheduler experiment, explained as the third case study in the paper.
+3) TS: Thread scheduler experiment, explained as the third case study in the paper. The following refer to the arguments used for 4 different trials with the mentioned combinations of h values.
 
-4) PC: Probabilistic conformance, explained as the fourth case study in the paper.
+  ---- mdp_TS_thread_scheduler0_1 "AS sh . A s1 . A s2 . ~((h1(s1) & h2(s2)) & ~((P(F (l_1(s1) & terminated(s1))) = P(F (l_1(s2)& terminated(s2)))) & (P(F (l_2(s1)& terminated(s1))) = P(F (l_2(s2) & terminated(s2))))))"
+  ---- mdp_TS_thread_scheduler0_15 "AS sh . A s1 . A s2 . ~((h1(s1) & h2(s2)) & ~((P(F (l_1(s1) & terminated(s1))) = P(F (l_1(s2)& terminated(s2)))) & (P(F (l_2(s1)& terminated(s1))) = P(F (l_2(s2) & terminated(s2))))))"
+  ---- mdp_TS_thread_scheduler4_8 "AS sh . A s1 . A s2 . ~((h1(s1) & h2(s2)) & ~((P(F (l_1(s1) & terminated(s1))) = P(F (l_1(s2)& terminated(s2)))) & (P(F (l_2(s1)& terminated(s1))) = P(F (l_2(s2) & terminated(s2))))))"
+  ---- mdp_TS_thread_scheduler8_15 "AS sh . A s1 . A s2 . ~((h1(s1) & h2(s2)) & ~((P(F (l_1(s1) & terminated(s1))) = P(F (l_1(s2)& terminated(s2)))) & (P(F (l_2(s1)& terminated(s1))) = P(F (l_2(s2) & terminated(s2))))))"
+
+4) PC: Probabilistic conformance, explained as the fourth case study in the paper. The two cases include the cases where we allow all possible non-deterministic choice for state 0 of the of the first coin and allow all possible non-deterministic choice for state 0 of the of the first coin alongwith state 0 of the second coin.
+
+  ---- mdp_synthesis0 ES sh . A s1 . E s2 . ~((start1(s1) & start2(s2)) & ~((P(F die1(s1)) = P(F die1(s2))) & ((P(F die2(s1)) = P(F die2(s2))) & ((P(F die3(s1)) = P(F die3(s2))) & ((P(F die4(s1)) = P(F die4(s2))) & ((P(F die5(s1)) = P(F die5(s2))) & (P(F die6(s1)) = P(F die6(s2))) ) ) ) ) ) )"
+  ---- mdp_synthesis0_1 ES sh . A s1 . E s2 . ~((start1(s1) & start2(s2)) & ~((P(F die1(s1)) = P(F die1(s2))) & ((P(F die2(s1)) = P(F die2(s2))) & ((P(F die3(s1)) = P(F die3(s2))) & ((P(F die4(s1)) = P(F die4(s2))) & ((P(F die5(s1)) = P(F die5(s2))) & (P(F die6(s1)) = P(F die6(s2))) ) ) ) ) ) )"
 
