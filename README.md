@@ -3,7 +3,7 @@ Verifying Hyperproperties on MDP
 
 This script uses python 3, however, it has a few depencies:
 
---Carl(https://smtrat.github.io/carl)
+-- Carl(https://smtrat.github.io/carl)
 
 -- Pycarl(https://moves-rwth.github.io/pycarl)
 
@@ -19,4 +19,4 @@ The arguments that the script needs are as follows:
 
 2)property used on the model
 
-The details of the experiments have been provided in Experiments.txt
+The details of the experiments have been provided in https://github.com/oreohere/HyperOnMDP/blob/master/Experiments.txt
