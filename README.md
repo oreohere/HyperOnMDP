@@ -19,4 +19,4 @@ The arguments that the script needs are as follows:
 
 2)property used on the model
 
-The details of the experiments have been provided in Experiments.txt
+The details of the experiments have been provided in https://github.com/oreohere/HyperOnMDP/blob/master/Experiments.txt
