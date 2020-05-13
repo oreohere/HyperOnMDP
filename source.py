@@ -1,12 +1,11 @@
-import csv
 import itertools
-import sys
 import time
 
 import stormpy
-import files
-from lark import Lark, Token, Tree
+from lark import Lark, Token
 from z3 import *
+
+import files
 
 turtle_grammar = """
     start:  "AS" NAME "." start -> forall_scheduler
@@ -55,62 +54,14 @@ list_of_z3_variables = []
 csvData = []
 
 
-def try_z3():
-    x1 = Int('x1')
-    y = Int('y')
-    y1 = Int('y1')
-    z = Bool('z')
-    z1 = Bool('z1')
-    s = Solver()
-    equation = Or()
-    equation.children = [z == True, z1 == True]
-    s.add(Or(z))
-    # s.add(Or(z))
-    t1 = s.check()
-    m = s.model()
-    s.add(And(z1 == True, Or(z), And(z, z1)))
-    # s.add(y == 2)
-    # s.add(x1 + y == 5)
-    t = s.check()
-    print("Hi")
-
-
 def SemanticsUnboundedUntil(model, formula_duplicate, combined_list_of_states, n):
     print("Starting until")
     phi1 = formula_duplicate.children[0].children[0]
     index_of_phi1 = list_of_subformula.index(phi1)
     phi2 = formula_duplicate.children[0].children[1]
     index_of_phi2 = list_of_subformula.index(phi2)
-    # s112 = Semantics(model, phi1, combined_list_of_states, n)
-    # s212 = Semantics(model, phi2, combined_list_of_states, n)
     result_string = 'A(' + Semantics(model, phi1, combined_list_of_states, n) + ' ' + Semantics(model, phi2, combined_list_of_states, n) + ')'
     index_of_phi = list_of_subformula.index(formula_duplicate)
-    # result_string = 'A(' + result_string + ' '
-    # sum_of_loop1 = 'A('
-    # sum_of_loop2 = 'A('
-    #
-    # for li in combined_list_of_states:
-    #     first_and1 = "A(prob_" + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi1) + '=1' + ' holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi1) + ')'
-    #     second_and1 = "A(prob_" + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi1) + '=0' + ' N(holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi1) + '))'
-    #     final_or1 = 'V(' + first_and1 + ' ' + second_and1 + ')'
-    #     sum_of_loop1 += final_or1 + ' '
-    #     first_and2 = "A(prob_" + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi2) + '=1' + ' holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi2) + ')'
-    #     second_and2 = "A(prob_" + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi2) + '=0' + ' N(holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi2) + '))'
-    #     final_or2 = 'V(' + first_and2 + ' ' + second_and2 + ')'
-    #     sum_of_loop2 += final_or2 + ' '
-    #     if "prob_" + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi1) not in list_of_z3_variables:
-    #         list_of_z3_variables.append("prob_" + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi1))
-    #     if 'holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi1) not in list_of_z3_variables:
-    #         list_of_z3_variables.append('holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi1))
-    #     if "prob_" + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi2) not in list_of_z3_variables:
-    #         list_of_z3_variables.append("prob_" + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi2))
-    #     if 'holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi2) not in list_of_z3_variables:
-    #         list_of_z3_variables.append('holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi2))
-    # sum_of_loop1 = sum_of_loop1[0:len(sum_of_loop1) - 1] + ')'
-    # sum_of_loop2 = sum_of_loop2[0:len(sum_of_loop2) - 1] + ')'
-    # result_string += sum_of_loop1 + ')'
-    # result_string = 'A(' + result_string + ' ' + sum_of_loop2 + ')'
-    print("In until , staring line 5 of algo")
     dict_of_acts = dict()
     dict_of_acts_tran = dict()
     for state in model.states:
@@ -119,11 +70,9 @@ def SemanticsUnboundedUntil(model, formula_duplicate, combined_list_of_states, n
             list_of_tran = []
             list_of_act.append(action.id)
             for tran in action.transitions:
-                # list_of_tran.append({tran.column: tran.value()})
                 list_of_tran.append(str(tran.column) + ' ' + str(tran.value()))
             dict_of_acts_tran[str(state.id) + ' ' + str(action.id)] = list_of_tran
         dict_of_acts[state.id] = list_of_act
-    # result_string = 'A(' + result_string + ' '
 
     for li in combined_list_of_states:
         result_string = 'A(' + result_string + ' '
@@ -400,7 +349,6 @@ def SemanticsNext(model, formula_duplicate, combined_list_of_states, n):
             list_of_tran = []
             list_of_act.append(action.id)
             for tran in action.transitions:
-                # list_of_tran.append({tran.column: tran.value()})
                 list_of_tran.append(str(tran.column) + ' ' + str(tran.value()))  # storing just transition values, not state it transitions to
             dict_of_acts_tran[str(state.id) + ' ' + str(action.id)] = list_of_tran
         dict_of_acts[state.id] = list_of_act
@@ -473,9 +421,7 @@ def SemanticsFuture(model, formula_duplicate, combined_list_of_states, n):
             list_of_z3_variables.append('prob_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi))
         if 'holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi2) not in list_of_z3_variables:
             list_of_z3_variables.append('holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi2))
-        # second_implies = 'I(N(holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi2) + ') ' + 'prob_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi) + '=0)'
         new_prob_const = 'G(prob_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi) + ' 0)'
-        # result_string += first_implies + ' ' + second_implies + ' ' + new_prob_const + ')'
         result_string += first_implies + ' ' + new_prob_const + ')'
         combined_acts = list(itertools.product(dict_of_acts[li[0]], dict_of_acts[li[1]]))
         for ca in combined_acts:
@@ -773,11 +719,6 @@ def Truth(model, formula_initial, combined_list_of_states, n):
     return result_string
 
 
-def toSMT2Benchmark(f, status="unknown", name="benchmark", logic=""):
-    v = (Ast * 0)()
-    return Z3_benchmark_to_smtlib_string(f.ctx_ref(), name, logic, status, "", 0, v, f.as_ast())
-
-
 def check(F):  # this will take the string F, convert it to z3 compatible equation and return the result of smt checking, True if sat
     list_of_reals = []
     listOfReals = []
@@ -947,12 +888,10 @@ def check(F):  # this will take the string F, convert it to z3 compatible equati
             i += 1
         elif F[i] == ' ':
             i += 1
-    # csvData.append(toSMT2Benchmark(equation, logic="QF_LIA"))
     print("Finished conversion to z3format. Solving...")
     starting = time.process_time()
     s = Solver()
     s.add(equation)
-    # csvData.append(equation)
     t = s.check()
     print("Time required by z3: " + str(time.process_time() - starting))
     if t == sat:
@@ -970,7 +909,6 @@ def check(F):  # this will take the string F, convert it to z3 compatible equati
             if li.name()[0] == 'a':
                 li_a[li.name()] = m[li]
                 print(str(li.name()) + '=' + str(m[li]))
-        # csvData.append([m])
     print(s.statistics())
     print("\n")
     print("Number of variables: " + str(len(list_of_ints) + len(list_of_reals) + len(list_of_bools)))
@@ -1055,7 +993,6 @@ def main_smt_encoding(model, formula_initial, formula):
         print("Calling Semantics...")
         semantics_result = Semantics(model, formula_duplicate, combined_list_of_states, n)
         F = "A(" + F + " " + semantics_result + " " + truth_result + ")"
-        # csvData.append([F])
         smt_end_time = time.process_time() - starttime
         print("Time to encode: " + str(smt_end_time))
         print("Calling check...")
@@ -1117,6 +1054,7 @@ def main_smt_encoding(model, formula_initial, formula):
 if __name__ == '__main__':
     part_path = sys.argv[1]
     folder_file = part_path.split('_', 1)
+    subfolder_file = folder_file.split('_', 1)
     path = files._path(folder_file[0], folder_file[1] + ".nm")
     print(path)
     initial_prism_program = stormpy.parse_prism_program(path)
@@ -1137,20 +1075,9 @@ if __name__ == '__main__':
     parser = Lark(turtle_grammar)
     formula = sys.argv[2]
     parsed_formula_initial = parser.parse(formula)
-    # with open('resultdiffprivy.csv', 'w') as csvFile:
-    #     writer = csv.writer(csvFile, delimiter=',')
-    #     row = [formula]
-    #     csvData.append(row)
-    #     row = ['-----------------------------------------------------']
-    #     csvData.append(row)
 
     result = main_smt_encoding(initial_model, parsed_formula_initial, formula)
-    #     writer.writerows(csvData)
-    # csvFile.close()
     print(result)
-
-# A = And, V = Or,  X = Xor,  I = Implies, G = greater than equal,  g = greater
-# M = multiplication,  P = Addition, S = subtraction, E = equal, L = less than equal, l = less, e = not equal
 
 # mdp_example_and "ES sh . E s1 . E s2 . ( one(s1) & two(s2) )" s1 and s2 are dtmcs extended by using scheduler sh on the mdp example_and.nm
 # mdp_example_neg_const "ES sh . E s1 . E s2 . (P(X ( one(s1) & two(s2) )) < 0.5)"
@@ -1169,8 +1096,7 @@ if __name__ == '__main__':
 # mdp_multi_threads_with_loops_diffh "AS sh . A s1 . A s2 . ~((h1(s1) & h2(s2)) & ~((P(true U (l_1(s1) & terminated(s1))) = P(true U (l_1(s2)& terminated(s2)))) & (P(true U (l_2(s1)& terminated(s1))) = P(true U (l_2(s2) & terminated(s2))))))"
 # mdp_multi_threads_with_loops_diffh "AS sh . A s1 . A s2 . ~((h1(s1) & h2(s2)) & ~((P(F (l_1(s1) & terminated(s1))) = P(F (l_1(s2)& terminated(s2)))) & (P(F (l_2(s1)& terminated(s1))) = P(F (l_2(s2) & terminated(s2))))))"
 
-# mdp_timimg_attach "AS sh . A s1 . A s2 . ~((start(s1) & start(s2)) & ~(P(true U counter0(s1)) = P(true U counter0(s2))))
-# mdp_timing_attack5 "AS sh . A s1 . A s2 . ~((start0(s1) & start1(s2)) & ~(P(true U counter0(s1)) = P(true U counter0(s2))))"
+# mdp_TA_timing_attack "AS sh . A s1 . A s2 . ~((start0(s1) & start1(s2)) & ~(P(true U counter0(s1)) = P(true U counter0(s2))))"
 
 # mdp_database_rev2 " AS sh . A s1 . A s2 . ~((start1(s1) & start2(s2)) & ~(P(F cancer_p1(s1)) = P(F cancer_p1(s2))))"
 
@@ -1184,3 +1110,5 @@ if __name__ == '__main__':
 # label "p1_has_cancer" = p1_bc=1;
 # label "p0_has_heart_disease" = p0_bh=1;
 # label "p1_has_heart_disease" = p1_bh=1;
+
+# A = And, V = Or,  X = Xor,  I = Implies, G = greater than equal,  g = greater,  M = multiplication,  P = Addition, S = subtraction, E = equal, L = less than equal, l = less
