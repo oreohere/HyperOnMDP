@@ -50,8 +50,14 @@ turtle_grammar = """
 """
 parser = None
 list_of_subformula = []
-list_of_z3_variables = []
-csvData = []
+list_of_reals = []
+listOfReals = []
+list_of_bools = []
+listOfBools = []
+list_of_ints = []
+listOfInts = []
+s = None
+nos_of_subformula = 0
 
 
 def SemanticsUnboundedUntil(model, formula_duplicate, combined_list_of_states, n):
@@ -800,6 +806,7 @@ def Truth(model, formula_initial, combined_list_of_states, n):
             formula_initial = formula_initial.children[1]
     index_of_phi = list_of_subformula.index(formula_initial)
     result_string = ""
+
     if n == 2:
         if list_of_AV[0] == 'V':
             result_string += ' V('
@@ -1007,7 +1014,6 @@ def check(
             i += 1
     print("Finished conversion to z3format. Solving...")
     starting = time.process_time()
-    s = Solver()
     s.add(equation)
     t = s.check()
     print("Time required by z3: " + str(time.process_time() - starting))
@@ -1068,53 +1074,83 @@ def add_to_subformula_list(formula_phi):  # add as you go any new subformula par
         add_to_subformula_list(right_child)
 
 
-def main_smt_encoding(model, formula_initial, formula):
-    first_o = True
-    list_of_states = []
-    F = 'A('
+def add_to_variable_list(name):
+    if name[0] == 'h' and name not in list_of_bools:
+        list_of_bools.append(name)
+        listOfBools.append(Bool(name))
+    elif name[0] in ['p', 'd'] and name not in list_of_reals:
+        list_of_reals.append(name)
+        listOfReals.append(Real(name))
+    elif name[0] == 'a' and name not in list_of_ints:
+        list_of_ints.append(name)
+        listOfInts.append(Int(name))
+    else:
+        print(name)
 
+
+def check_result():
+    starting = time.process_time()
+    t = s.check()
+    print("Time required by z3: " + str(time.process_time() - starting))
+    if t == sat:
+        model = s.model()
+        li_h = dict()
+        for li in model:
+            if li.name()[0] == 'h':
+                li_h[li.name()] = model[li]
+        li_p = dict()
+        for li in model:
+            if li.name()[0] == 'p':
+                li_p[li.name()] = model[li]
+        li_a = dict()
+        for li in model:
+            if li.name()[0] == 'a':
+                li_a[li.name()] = model[li]
+                print(str(li.name()) + '=' + str(model[li]))
+    print(s.statistics())
+    print("\n")
+    print("Number of variables: " + str(len(list_of_ints) + len(list_of_reals) + len(list_of_bools)))
+    print("Number of formula checked: " + str(nos_of_subformula))
+    if t.r == 1:
+        return True
+    elif t.r == -1:
+        return False
+
+
+def main_smt_encoding(model, formula_initial, formula):
+    global nos_of_subformula
+    list_of_states = []
     starttime = time.process_time()
     for state in model.states:
-        first_i = True
-        sa = 'V('
+        list_of_eqns = []
         for action in state.actions:
-            act = "a_" + str(state.id) + "=" + str(action.id)  # a1 means action for state 1
-            if "a_" + str(state.id) not in list_of_z3_variables:
-                list_of_z3_variables.append("a_" + str(state.id))
-            if first_i:
-                sa += act
-                first_i = False
-            else:
-                sa += ' ' + act
-        sa += ')'
-        if first_o:
-            F += sa
-            first_o = False
-        else:
-            F += " " + sa
-    F += ')'
-    n = 0
+            name = "a_" + str(state.id)  # + "=" + str(action.id)# a1 means action for state 1
+            add_to_variable_list(name)
+            list_of_eqns.append(listOfInts[list_of_ints.index(name)] == int(action.id))
+            nos_of_subformula += 1
+        s.add(Or([par for par in list_of_eqns]))
+        nos_of_subformula += 1
+    n_of_state_quantifier = 0
     formula_duplicate = formula_initial
     while len(formula_duplicate.children) > 0 and type(formula_duplicate.children[0]) == Token:
         if formula_duplicate.data in ['exist_scheduler', 'forall_scheduler']:
             formula_duplicate = formula_duplicate.children[1]
         elif formula_duplicate.data in ['exist', 'forall']:
-            n += 1
+            n_of_state_quantifier += 1
             formula_duplicate = formula_duplicate.children[1]
     for state in model.states:
         list_of_states.append(state.id)
-    combined_list_of_states = list(itertools.product(list_of_states, repeat=n))
+    combined_list_of_states = list(itertools.product(list_of_states, repeat=n_of_state_quantifier))
     if formula_initial.data == 'exist_scheduler':
         add_to_subformula_list(formula_initial)
         print("Calling Truth...")
-        truth_result = Truth(model, formula_initial, combined_list_of_states, n)
+        Truth(model, formula_initial, combined_list_of_states, n_of_state_quantifier)
         print("Calling Semantics...")
-        semantics_result = Semantics(model, formula_duplicate, combined_list_of_states, n)
-        F = "A(" + F + " " + semantics_result + " " + truth_result + ")"
+        Semantics(model, formula_duplicate, combined_list_of_states, n_of_state_quantifier)
         smt_end_time = time.process_time() - starttime
         print("Time to encode: " + str(smt_end_time))
-        print("Calling check...")
-        if check(F):
+        print("Checking...")
+        if check_result():
             return True
         else:
             return False
@@ -1146,24 +1182,22 @@ def main_smt_encoding(model, formula_initial, formula):
                 i += 1
         new_parsed_formula = parser.parse(new_formula)
         formula_duplicate = new_parsed_formula
-        n = 0
+        n_of_state_quantifier = 0
         while len(formula_duplicate.children) > 0 and type(formula_duplicate.children[0]) == Token:
             if formula_duplicate.data in ['exist_scheduler', 'forall_scheduler']:
                 formula_duplicate = formula_duplicate.children[1]
             elif formula_duplicate.data in ['exist', 'forall']:
-                n += 1
+                n_of_state_quantifier += 1
                 formula_duplicate = formula_duplicate.children[1]
         add_to_subformula_list(new_parsed_formula)
         print("Calling Truth...")
-        truth_result = Truth(model, new_parsed_formula, combined_list_of_states, n)
+        Truth(model, new_parsed_formula, combined_list_of_states, n_of_state_quantifier)
         print("Calling Semantics...")
-        semantics_result = Semantics(model, formula_duplicate, combined_list_of_states, n)
-        F = 'A(' + F + ' ' + semantics_result + ' ' + truth_result + ')'
+        Semantics(model, formula_duplicate, combined_list_of_states, n_of_state_quantifier)
         smt_end_time = time.process_time() - starttime
         print("Time to encode: " + str(smt_end_time))
-        print("Calling check...")
-        # csvData.append([F])
-        if check(F):
+        print("Checking...")
+        if check_result():
             return False
         else:
             return True
@@ -1192,6 +1226,14 @@ if __name__ == '__main__':
     parser = Lark(turtle_grammar)
     formula = sys.argv[2]
     parsed_formula_initial = parser.parse(formula)
-
+    s = Solver()
+    '''
+    x = Int('x')
+    y = Int('y')
+    # s.add(And(Or(x==0, y==1), Or(x==1, y==0)))
+    # s.add()
+    m = s.check()
+    n = s.model()
+    '''
     result = main_smt_encoding(initial_model, parsed_formula_initial, formula)
     print(result)
