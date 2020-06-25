@@ -383,10 +383,8 @@ def SemanticsBoundedUntil(model, formula_duplicate, combined_list_of_states, n):
 
 
 def SemanticsNext(model, formula_duplicate, combined_list_of_states, n):
-    result_string = ''
     phi1 = formula_duplicate.children[0].children[0]
-    result_string = Semantics(model, phi1, combined_list_of_states, n)
-    result_string = 'A(' + result_string + ' A('
+    Semantics(model, phi1, combined_list_of_states, n)
     index_phi1 = list_of_subformula.index(phi1)
     for li in combined_list_of_states:
         pos_and = 'A(prob_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_phi1) + '=1 holds_' + str(
@@ -468,7 +466,7 @@ def SemanticsFuture(model, formula_duplicate, combined_list_of_states, n):
     phi2 = formula_duplicate.children[0].children[0]
     index_of_phi2 = list_of_subformula.index(phi2)
     index_of_phi = list_of_subformula.index(formula_duplicate)
-    result_string = Semantics(model, phi2, combined_list_of_states, n)
+    Semantics(model, phi2, combined_list_of_states, n)
 
     dict_of_acts = dict()
     dict_of_acts_tran = dict()
@@ -569,6 +567,7 @@ def SemanticsFuture(model, formula_duplicate, combined_list_of_states, n):
 
 
 def Semantics(model, formula_duplicate, combined_list_of_states, n):
+    global nos_of_subformula
     if formula_duplicate.data == 'true':
         print("Starting with true")
         list_of_holds = []
@@ -579,6 +578,7 @@ def Semantics(model, formula_duplicate, combined_list_of_states, n):
             add_to_variable_list(name)
             list_of_holds.append(listOfBools[list_of_bools.index(name)])
         s.add(And([par for par in list_of_holds]))
+        nos_of_subformula += 1
         list_of_holds.clear()
         print("Done with true")
     elif formula_duplicate.data == 'var':  # var handles the inside varname
@@ -597,9 +597,12 @@ def Semantics(model, formula_duplicate, combined_list_of_states, n):
             add_to_variable_list(name)
             if li[int(ap_state) - 1] in list_of_state_with_ap:
                 and_for_yes.append(listOfBools[list_of_bools.index(name)])
+                nos_of_subformula += 1
             else:
                 and_for_no.append(Not(listOfBools[list_of_bools.index(name)]))
+                nos_of_subformula += 1
         s.add(And(And([par for par in and_for_yes]), And([par for par in and_for_no])))
+        nos_of_subformula += 1
         and_for_yes.clear()
         and_for_no.clear()
         print("Done with var " + str(ap_name))
@@ -618,10 +621,13 @@ def Semantics(model, formula_duplicate, combined_list_of_states, n):
             add_to_variable_list(name3)
             first_and = And(listOfBools[list_of_bools.index(name1)], listOfBools[list_of_bools.index(name2)],
                             listOfBools[list_of_bools.index(name3)])
+            nos_of_subformula += 1
             second_and = And(Not(listOfBools[list_of_bools.index(name1)]),
                              Or(Not(listOfBools[list_of_bools.index(name2)]),
                                 Not(listOfBools[list_of_bools.index(name3)])))
+            nos_of_subformula += 1
             s.add(Or(first_and, second_and))
+            nos_of_subformula += 1
         print("Done with and")
     elif formula_duplicate.data == 'neg_op':
         print("Starting with neg")
@@ -635,7 +641,9 @@ def Semantics(model, formula_duplicate, combined_list_of_states, n):
             name2 = 'holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_phi1)
             add_to_variable_list(name2)
             list_of_xors.append(Xor(listOfBools[list_of_bools.index(name1)], listOfBools[list_of_bools.index(name2)]))
+            nos_of_subformula += 1
         s.add(And([par for par in list_of_xors]))
+        nos_of_subformula += 1
         print("Done with neg")
     elif formula_duplicate.data == 'less_prob':
         Semantics(model, formula_duplicate.children[0], combined_list_of_states, n)
@@ -652,9 +660,12 @@ def Semantics(model, formula_duplicate, combined_list_of_states, n):
             add_to_variable_list(name3)
             and_less = And(listOfBools[list_of_bools.index(name1)],
                            listOfReals[list_of_reals.index(name2)] < listOfReals[list_of_reals.index(name3)])
+            nos_of_subformula += 1
             and_greateq = And(Not(listOfBools[list_of_bools.index(name1)]),
                               listOfReals[list_of_reals.index(name2)] >= listOfReals[list_of_reals.index(name3)])
+            nos_of_subformula += 1
             s.add(Or(and_less, and_greateq))
+            nos_of_subformula += 1
         print("Done with less_prob")
     elif formula_duplicate.data == 'greater_prob':
         Semantics(model, formula_duplicate.children[0], combined_list_of_states, n)
@@ -671,9 +682,12 @@ def Semantics(model, formula_duplicate, combined_list_of_states, n):
             add_to_variable_list(name3)
             and_great = And(listOfBools[list_of_bools.index(name1)],
                             listOfReals[list_of_reals.index(name2)] > listOfReals[list_of_reals.index(name3)])
+            nos_of_subformula += 1
             and_lesseq = And(Not(listOfBools[list_of_bools.index(name1)]),
                              listOfReals[list_of_reals.index(name2)] <= listOfReals[list_of_reals.index(name3)])
+            nos_of_subformula += 1
             s.add(Or(and_great, and_lesseq))
+            nos_of_subformula += 1
         print("Done with greater_prob")
     elif formula_duplicate.data == 'equal_prob':
         Semantics(model, formula_duplicate.children[0], combined_list_of_states, n)
@@ -690,9 +704,12 @@ def Semantics(model, formula_duplicate, combined_list_of_states, n):
             add_to_variable_list(name3)
             and_eq = And(listOfBools[list_of_bools.index(name1)],
                          listOfReals[list_of_reals.index(name2)] == listOfReals[list_of_reals.index(name3)])
+            nos_of_subformula += 1
             and_noteq = And(Not(listOfBools[list_of_bools.index(name1)]),
                             listOfReals[list_of_reals.index(name2)] != listOfReals[list_of_reals.index(name3)])
+            nos_of_subformula += 1
             s.add(Or(and_eq, and_noteq))
+            nos_of_subformula += 1
             print("Done with equal_prob")
     elif formula_duplicate.data == 'calc_probability':
         child = formula_duplicate.children[0]
@@ -719,6 +736,7 @@ def Semantics(model, formula_duplicate, combined_list_of_states, n):
             add_to_variable_list(name1)
             list_of_probs.append(listOfReals[list_of_reals.index(name1)] == c)
         s.add(And([par for par in list_of_probs]))
+        nos_of_subformula += 1
         print("Done with constant")
     elif formula_duplicate.data in ['add_prob', 'minus_prob', 'mul_prob']:
         left = formula_duplicate.children[0]
@@ -737,12 +755,15 @@ def Semantics(model, formula_duplicate, combined_list_of_states, n):
             if formula_duplicate.data == 'add_prob':
                 s.add(listOfReals[list_of_reals.index(name3)] == (
                         listOfReals[list_of_reals.index(name1)] + listOfReals[list_of_reals.index(name2)]))
+                nos_of_subformula += 1
             elif formula_duplicate.data == 'minus_prob':
                 s.add(listOfReals[list_of_reals.index(name3)] == (
                         listOfReals[list_of_reals.index(name1)] - listOfReals[list_of_reals.index(name2)]))
+                nos_of_subformula += 1
             elif formula_duplicate.data == 'mul_prob':
                 s.add(listOfReals[list_of_reals.index(name3)] == (
                         listOfReals[list_of_reals.index(name1)] * listOfReals[list_of_reals.index(name2)]))
+                nos_of_subformula += 1
 
 
 def Truth(model, formula_initial, combined_list_of_states, n):
@@ -778,8 +799,6 @@ def Truth(model, formula_initial, combined_list_of_states, n):
                 nos_of_subformula += 1
                 list_of_holds.clear()
 
-            if i % 25000 == 0:
-                print("In Truth going good " + str(i))
         if list_of_AV[0] == 'V':
             s.add(Or([par for par in list_of_eqns]))
         elif list_of_AV[0] == 'A':
