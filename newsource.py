@@ -793,7 +793,8 @@ def Semantics(model, formula_duplicate, combined_list_of_states, n):
 
 
 def Truth(model, formula_initial, combined_list_of_states, n):
-    list_of_AV = []  # will have the OR,AND according to the quantifier in that index in the formula
+    global nos_of_subformula
+    list_of_AV = []  # will have the OR, AND according to the quantifier in that index in the formula
 
     while len(formula_initial.children) > 0 and type(formula_initial.children[0]) == Token:
         if formula_initial.data in ['exist_scheduler', 'forall_scheduler']:
@@ -805,40 +806,31 @@ def Truth(model, formula_initial, combined_list_of_states, n):
             list_of_AV.append('A')
             formula_initial = formula_initial.children[1]
     index_of_phi = list_of_subformula.index(formula_initial)
-    result_string = ""
-
+    list_of_holds = []
+    list_of_eqns = []
     if n == 2:
-        if list_of_AV[0] == 'V':
-            result_string += ' V('
-        else:
-            result_string += ' A('
-        first = True
         print("Starting big loop in Truth")
         for i in range(len(combined_list_of_states)):
-            if first or combined_list_of_states[i - 1][0] == combined_list_of_states[i][0] - 1:
-                if list_of_AV[1] == 'V':
-                    result_string += "V(holds_" + str(combined_list_of_states[i][0]) + "_" + str(
-                        combined_list_of_states[i][1]) + "_" + str(index_of_phi) + " "
-                else:
-                    result_string += "A(holds_" + str(combined_list_of_states[i][0]) + "_" + str(
-                        combined_list_of_states[i][1]) + "_" + str(index_of_phi) + " "
-                first = False
-            elif ((i + 1) == len(combined_list_of_states)) or combined_list_of_states[i][0] == \
+            name = "holds_" + str(combined_list_of_states[i][0]) + "_" + str(combined_list_of_states[i][1]) + "_" + str(
+                index_of_phi)
+            add_to_variable_list(name)
+            list_of_holds.append(listOfBools[list_of_bools.index(name)])
+
+            if ((i + 1) == len(combined_list_of_states)) or combined_list_of_states[i][0] == \
                     combined_list_of_states[i + 1][0] - 1:
-                result_string += "holds_" + str(combined_list_of_states[i][0]) + "_" + str(
-                    combined_list_of_states[i][1]) + "_" + str(index_of_phi) + ") "
-            else:
                 if list_of_AV[1] == 'V':
-                    result_string += "holds_" + str(combined_list_of_states[i][0]) + "_" + str(
-                        combined_list_of_states[i][1]) + "_" + str(index_of_phi) + " "
-            if "holds_" + str(combined_list_of_states[i][0]) + "_" + str(combined_list_of_states[i][1]) + "_" + str(
-                    index_of_phi) not in list_of_z3_variables:
-                list_of_z3_variables.append("holds_" + str(combined_list_of_states[i][0]) + "_" + str(
-                    combined_list_of_states[i][1]) + "_" + str(index_of_phi))
+                    list_of_eqns.append(Or([par for par in list_of_holds]))
+                elif list_of_AV[1] == 'A':
+                    list_of_eqns.append(And([par for par in list_of_holds]))
+                nos_of_subformula += 1
+                list_of_holds.clear()
+
             if i % 25000 == 0:
                 print("In Truth going good " + str(i))
-        result_string = result_string[0:len(result_string) - 1] + ')'
-    return result_string
+        if list_of_AV[0] == 'V':
+            s.add(Or([par for par in list_of_eqns]))
+        elif list_of_AV[0] == 'A':
+            s.add(And([par for par in list_of_eqns]))
 
 
 def check(
