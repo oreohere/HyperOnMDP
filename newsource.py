@@ -462,6 +462,7 @@ def SemanticsNext(model, formula_duplicate, combined_list_of_states, n):
 
 
 def SemanticsFuture(model, formula_duplicate, combined_list_of_states, n):
+    global nos_of_subformula
     print("Starting future")
     phi2 = formula_duplicate.children[0].children[0]
     index_of_phi2 = list_of_subformula.index(phi2)
@@ -483,87 +484,74 @@ def SemanticsFuture(model, formula_duplicate, combined_list_of_states, n):
     print("In future , staring line 4 of algo")
 
     for li in combined_list_of_states:
-        result_string = 'A(' + result_string + ' '
-        first_implies = 'I(holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi2) + ' ' + 'prob_' + str(
-            li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi) + '=1)'
-        if 'prob_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi) not in list_of_z3_variables:
-            list_of_z3_variables.append('prob_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi))
-        if 'holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi2) not in list_of_z3_variables:
-            list_of_z3_variables.append('holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi2))
-        new_prob_const = 'G(prob_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi) + ' 0)'
-        result_string += first_implies + ' ' + new_prob_const + ')'
+        name1 = 'holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi2)
+        add_to_variable_list(name1)
+        name2 = 'prob_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi)
+        add_to_variable_list(name2)
+        first_implies = Implies(listOfBools[list_of_bools.index(name1)],
+                                (listOfReals[list_of_reals.index(name2)] == float(1)))
+        nos_of_subformula += 2
+        new_prob_const = listOfReals[list_of_reals.index(name2)] >= float(0)
+        nos_of_subformula += 1
+        s.add(And(first_implies, new_prob_const))
+        nos_of_subformula += 1
+
         combined_acts = list(itertools.product(dict_of_acts[li[0]], dict_of_acts[li[1]]))
         for ca in combined_acts:
-            implies_precedent = 'A(N(holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(
-                index_of_phi2) + ') A(a_' + str(li[0]) + '=' + str(ca[0]) + ' a_' + str(li[1]) + '=' + str(
-                ca[1]) + '))'
-            if 'a_' + str(li[0]) not in list_of_z3_variables:
-                list_of_z3_variables.append('a_' + str(li[0]))
-            if 'a_' + str(li[1]) not in list_of_z3_variables:
-                list_of_z3_variables.append('a_' + str(li[1]))
+            name_0 = 'a_' + str(li[0])
+            add_to_variable_list(name_0)
+            name_1 = 'a_' + str(li[1])
+            add_to_variable_list(name_1)
+            implies_precedent = And(Not(listOfBools[list_of_bools.index(name1)]),
+                                    And(listOfInts[list_of_ints.index(name_0)] == int(ca[0]),
+                                        listOfInts[list_of_ints.index(name_1)] == int(ca[1])))
+            nos_of_subformula += 5
 
-            implies_antecedent_and1 = 'E(prob_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi) + ' '
+            prob_phi = 'prob_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi)
+            add_to_variable_list(prob_phi)
             combined_succ = list(itertools.product(dict_of_acts_tran[str(li[0]) + " " + str(ca[0])],
                                                    dict_of_acts_tran[str(li[1]) + " " + str(ca[1])]))
-            first = False
-            if len(combined_succ) == 1:
-                first = True
-            prod_left = 'P('
+            first = True
+            # one = False
+            # if len(combined_succ) == 1:
+            #     one = True
+            prod_left = None
+            prod_right_or = None
+            list_of_ors = []
             for cs in combined_succ:
                 space_in0 = cs[0].find(' ')
                 space_in1 = cs[1].find(' ')
+                prob_succ = 'prob_' + cs[0][0:space_in0] + '_' + cs[1][0:space_in1] + '_' + str(index_of_phi)
+                add_to_variable_list(prob_succ)
+                holds_succ = 'holds_' + cs[0][0:space_in0] + '_' + cs[1][0:space_in1] + '_' + str(index_of_phi2)
+                add_to_variable_list(holds_succ)
+                d_current = 'd_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi2)
+                add_to_variable_list(d_current)
+                d_succ = 'd_' + cs[0][0:space_in0] + '_' + cs[1][0:space_in1] + '_' + str(index_of_phi2)
+                add_to_variable_list(d_succ)
+                list_of_ors.append(Or(listOfBools[list_of_bools.index(holds_succ)],
+                                      listOfReals[list_of_reals.index(d_current)] > listOfReals[
+                                          list_of_reals.index(d_succ)]))
+                nos_of_subformula += 2
                 if first:
-                    prod_left = 'M(' + str(cs[0][space_in0 + 1:]) + ' ' + str(cs[1][space_in1 + 1:]) + ' ' + 'prob_' + \
-                                cs[0][0:space_in0] + '_' + cs[1][0:space_in1] + '_' + str(
-                        index_of_phi) + ') '
+                    prod_left = float(cs[0][space_in0 + 1:]) * float(cs[1][space_in1 + 1:]) * listOfReals[
+                        list_of_reals.index(prob_succ)]
+                    first = False
                 else:
-                    prod_left += 'M(' + str(cs[0][space_in0 + 1:]) + ' ' + str(cs[1][space_in1 + 1:]) + ' ' + 'prob_' + \
-                                 cs[0][0:space_in0] + '_' + cs[1][0:space_in1] + '_' + str(
-                        index_of_phi) + ') '
-                if 'prob_' + cs[0][0:space_in0] + '_' + cs[1][0:space_in1] + '_' + str(
-                        index_of_phi) not in list_of_z3_variables:
-                    list_of_z3_variables.append(
-                        'prob_' + cs[0][0:space_in0] + '_' + cs[1][0:space_in1] + '_' + str(index_of_phi))
-            if first:
-                implies_antecedent_and1 += prod_left[0:len(prod_left) - 1] + ')'
-            else:
-                implies_antecedent_and1 += prod_left[0:len(prod_left) - 1] + '))'
-            implies_antecedent_and2 = 'I(g(prob_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi) + ' 0) '
-            prod_right_or = 'V('
-            first = False
-            if len(combined_succ) == 1:
-                first = True
-            for cs in combined_succ:
-                space_in0 = cs[0].find(' ')
-                space_in1 = cs[1].find(' ')
-                if first:
-                    prod_right_or = 'V(holds_' + cs[0][0:space_in0] + '_' + cs[1][0:space_in1] + '_' + str(
-                        index_of_phi2) + ' g(d_' + str(li[0]) + '_' + str(li[1]) + '_' + str(
-                        index_of_phi2) + ' d_' + cs[0][0:space_in0] + '_' + cs[1][0:space_in1] + '_' + str(
-                        index_of_phi2) + ')) '
-                else:
-                    prod_right_or += 'V(holds_' + cs[0][0:space_in0] + '_' + cs[1][0:space_in1] + '_' + str(
-                        index_of_phi2) + ' g(d_' + str(li[0]) + '_' + str(li[1]) + '_' + str(
-                        index_of_phi2) + ' d_' + cs[0][0:space_in0] + '_' + cs[1][0:space_in1] + '_' + str(
-                        index_of_phi2) + ')) '
-                if 'holds_' + cs[0][0:space_in0] + '_' + cs[1][0:space_in1] + '_' + str(
-                        index_of_phi2) not in list_of_z3_variables:
-                    list_of_z3_variables.append(
-                        'holds_' + cs[0][0:space_in0] + '_' + cs[1][0:space_in1] + '_' + str(index_of_phi2))
-                if 'd_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi2) not in list_of_z3_variables:
-                    list_of_z3_variables.append('d_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi2))
-                if 'd_' + cs[0][0:space_in0] + '_' + cs[1][0:space_in1] + '_' + str(
-                        index_of_phi2) not in list_of_z3_variables:
-                    list_of_z3_variables.append(
-                        'd_' + cs[0][0:space_in0] + '_' + cs[1][0:space_in1] + '_' + str(index_of_phi2))
-            if first:
-                implies_antecedent_and2 += prod_right_or[0:len(prod_right_or) - 1] + ')'
-            else:
-                implies_antecedent_and2 += prod_right_or[0:len(prod_right_or) - 1] + '))'
-            implies_antecedent = 'A(' + implies_antecedent_and1 + ' ' + implies_antecedent_and2 + ')'
-            result_string = 'A(' + result_string + ' I(' + implies_precedent + ' ' + implies_antecedent + '))'
+                    prod_left += float(cs[0][space_in0 + 1:]) * float(cs[1][space_in1 + 1:]) * listOfReals[
+                        list_of_reals.index(prob_succ)]
+                nos_of_subformula += 1
+            implies_antecedent_and1 = listOfReals[list_of_reals.index(prob_phi)] == prod_left
+            nos_of_subformula += 1
+            prod_right_or = Or([par for par in list_of_ors])
+            nos_of_subformula += 1
+            implies_antecedent_and2 = Implies(listOfReals[list_of_reals.index(prob_phi)] > 0, prod_right_or)
+            nos_of_subformula += 1
+            implies_antecedent = And(implies_antecedent_and1, implies_antecedent_and2)
+            nos_of_subformula += 1
+            s.add(Implies(implies_precedent, implies_antecedent))
+            nos_of_subformula += 1
     print("Done with future")
-    return result_string
 
 
 def Semantics(model, formula_duplicate, combined_list_of_states, n):
@@ -735,6 +723,7 @@ def Semantics(model, formula_duplicate, combined_list_of_states, n):
             name1 = 'prob_' + str(li[0]) + '_' + str(li[1]) + '_' + str(list_of_subformula.index(formula_duplicate))
             add_to_variable_list(name1)
             list_of_probs.append(listOfReals[list_of_reals.index(name1)] == c)
+            nos_of_subformula += 1
         s.add(And([par for par in list_of_probs]))
         nos_of_subformula += 1
         print("Done with constant")
@@ -755,15 +744,15 @@ def Semantics(model, formula_duplicate, combined_list_of_states, n):
             if formula_duplicate.data == 'add_prob':
                 s.add(listOfReals[list_of_reals.index(name3)] == (
                         listOfReals[list_of_reals.index(name1)] + listOfReals[list_of_reals.index(name2)]))
-                nos_of_subformula += 1
+                nos_of_subformula += 2
             elif formula_duplicate.data == 'minus_prob':
                 s.add(listOfReals[list_of_reals.index(name3)] == (
                         listOfReals[list_of_reals.index(name1)] - listOfReals[list_of_reals.index(name2)]))
-                nos_of_subformula += 1
+                nos_of_subformula += 2
             elif formula_duplicate.data == 'mul_prob':
                 s.add(listOfReals[list_of_reals.index(name3)] == (
                         listOfReals[list_of_reals.index(name1)] * listOfReals[list_of_reals.index(name2)]))
-                nos_of_subformula += 1
+                nos_of_subformula += 2
 
 
 def Truth(model, formula_initial, combined_list_of_states, n):
@@ -803,207 +792,7 @@ def Truth(model, formula_initial, combined_list_of_states, n):
             s.add(Or([par for par in list_of_eqns]))
         elif list_of_AV[0] == 'A':
             s.add(And([par for par in list_of_eqns]))
-
-
-def check(
-        F):  # this will take the string F, convert it to z3 compatible equation and return the result of smt checking, True if sat
-    list_of_reals = []
-    listOfReals = []
-    list_of_bools = []
-    listOfBools = []
-    list_of_ints = []
-    listOfInts = []
-    no_of_subformula = 0
-
-    for name in list_of_z3_variables:
-        if name[0] == 'h':
-            list_of_bools.append(name)
-            listOfBools.append(Bool(name))
-        elif name[0] in ['p', 'd']:
-            list_of_reals.append(name)
-            listOfReals.append(Real(name))
-        elif name[0] == 'a':
-            list_of_ints.append(name)
-            listOfInts.append(Int(name))
-        else:
-            print(name)
-    total_eqn = None
-    i = 0
-    operator = []
-    operands = []
-    open_paran = 0
-    close_paran = 0
-    s_in_op = False
-    n_in_op = False
-    le = len(F)
-    print("starting conversion to z3 format")
-    while i < len(F):
-        ch = F[i]
-        if F[i] in ['A', 'V', 'I', 'N', 'X', 'E', 'P', 'M', 'S', 'L', 'l', 'G', 'g', 'e']:
-            operator.append(F[i])
-            i += 1
-            no_of_subformula += 1
-        elif F[i] == '(':
-            open_paran += 1
-            operands.append(' ')
-            i += 1
-        elif F[i] in ['a', 'h', 'p', 'd'] or F[i].isdigit():
-            s_in_op = True
-            op_space_index = F.find(' ', i)
-            op_brac_index = F.find(')', i)
-            if (op_space_index < op_brac_index and op_space_index != -1) or op_brac_index == -1:
-                operands.append(F[i:op_space_index])
-                i = op_space_index
-            else:  # if (op_space_index > op_brac_index and op_brac_index != -1) or op_space_index == -1:
-                operands.append((F[i:op_brac_index]))
-                i = op_brac_index
-        elif F[i] == ')':
-            close_paran += 1
-            if operator[open_paran - close_paran] in ['V', 'A', 'I', 'X', 'N', 'X', 'E', 'P', 'M', 'S', 'L', 'l', 'G',
-                                                      'g', 'e']:
-                equation = None
-                if s_in_op:
-                    ran_list = []
-                    k = 0
-                    for k in range(len(operands) - 1, 0, -1):
-                        if type(operands[k]) == str and operands[k] == ' ':
-                            break
-                    k += 1
-                    while k < len(operands):
-                        if type(operands[k]) == str and operands[k] != ' ':
-                            if operands[k][0] == 'a':
-                                eq_index = operands[k].find('=', 0)
-                                num = int(operands[k][eq_index + 1:])
-                                name = operands[k][0:eq_index]
-                                ran_list.append(listOfInts[list_of_ints.index(name)] == num)
-                                operands.pop(k)
-                            elif operands[k][0] == 'h':
-                                ran_list.append(listOfBools[list_of_bools.index(operands[k])])
-                                operands.pop(k)
-                            elif operands[k][0] == 'd':
-                                ran_list.append(listOfReals[list_of_reals.index(operands[k])])
-                                operands.pop(k)
-                            elif operands[k][0] == 'p':
-                                eq_index = operands[k].find('=', 0)
-                                if eq_index == -1:
-                                    name = operands[k]
-                                    ran_list.append(listOfReals[list_of_reals.index(name)])
-                                else:
-                                    num = float(operands[k][eq_index + 1:])
-                                    name = operands[k][0:eq_index]
-                                    ran_list.append(listOfReals[list_of_reals.index(name)] == num)
-                                operands.pop(k)
-                            elif operands[k][0].isdigit():
-                                num = float(operands[k])
-                                ran_list.append(num)
-                                operands.pop(k)
-                        else:
-                            ran_list.append(operands[k])
-                            operands.pop(k)
-                            # k += 1
-                    if operator[open_paran - close_paran] == 'V':
-                        equation = Or([par for par in ran_list])
-                    elif operator[open_paran - close_paran] == 'A':
-                        equation = And([par for par in ran_list])
-                    elif operator[open_paran - close_paran] == 'N':
-                        equation = Not(ran_list[0])
-                        n_in_op = True
-                    elif operator[open_paran - close_paran] == 'I':
-                        equation = Implies(ran_list[0], ran_list[1])
-                    elif operator[open_paran - close_paran] == 'X':
-                        equation = Xor(ran_list[0], ran_list[1])
-                    elif operator[open_paran - close_paran] == 'M':
-                        for lk in ran_list:
-                            if equation is None:
-                                equation = lk
-                            else:
-                                equation *= lk
-                    elif operator[open_paran - close_paran] == 'E':
-                        equation = ran_list[0] == ran_list[1]
-                    elif operator[open_paran - close_paran] == 'P':
-                        for lk in ran_list:
-                            if equation is None:
-                                equation = lk
-                            else:
-                                equation += lk
-                    elif operator[open_paran - close_paran] == 'L':
-                        equation = ran_list[0] <= ran_list[1]
-                    elif operator[open_paran - close_paran] == 'l':
-                        equation = ran_list[0] < ran_list[1]
-                    elif operator[open_paran - close_paran] == 'G':
-                        equation = ran_list[0] >= ran_list[1]
-                    elif operator[open_paran - close_paran] == 'g':
-                        equation = ran_list[0] > ran_list[1]
-                    elif operator[open_paran - close_paran] == 'e':
-                        equation = ran_list[0] != ran_list[1]
-                    operands.pop()
-                    operands.append(equation)
-                    operator.pop()
-                    flag = False
-                    for fg in operands:
-                        if type(fg) == str and fg != ' ':
-                            flag = True
-                            break
-                    if flag:
-                        s_in_op = True
-                    else:
-                        s_in_op = False
-                else:  # not s_in_op and n_in_op
-                    ls = len(operands) - 1
-                    while ls >= 0:
-                        if type(operands[ls]) == str and operands[ls] == ' ':
-                            break
-                        ls -= 1
-                    po = ls + 1
-                    new_ops = []
-                    while po < len(operands):
-                        new_ops.append(operands[po])
-                        operands.pop(po)
-                    if operator[open_paran - close_paran] == 'V':
-                        equation = Or([par for par in new_ops])
-                    elif operator[open_paran - close_paran] == 'A':
-                        equation = And([par for par in new_ops])
-                    elif operator[open_paran - close_paran] == 'N':
-                        equation = Not(new_ops.pop())
-                        n_in_op = True
-                    elif operator[open_paran - close_paran] == 'I':
-                        equation = Implies(new_ops[0], new_ops[1])
-                    elif operator[open_paran - close_paran] == 'X':
-                        equation = Xor(new_ops[0], new_ops[1])
-                    operands.pop()
-                    operands.append(equation)
-                    operator.pop()
-            i += 1
-        elif F[i] == ' ':
-            i += 1
-    print("Finished conversion to z3format. Solving...")
-    starting = time.process_time()
-    s.add(equation)
-    t = s.check()
-    print("Time required by z3: " + str(time.process_time() - starting))
-    if t == sat:
-        m = s.model()
-        li_h = dict()
-        for li in m:
-            if li.name()[0] == 'h':
-                li_h[li.name()] = m[li]
-        li_p = dict()
-        for li in m:
-            if li.name()[0] == 'p':
-                li_p[li.name()] = m[li]
-        li_a = dict()
-        for li in m:
-            if li.name()[0] == 'a':
-                li_a[li.name()] = m[li]
-                print(str(li.name()) + '=' + str(m[li]))
-    print(s.statistics())
-    print("\n")
-    print("Number of variables: " + str(len(list_of_ints) + len(list_of_reals) + len(list_of_bools)))
-    print("Number of formula checked: " + str(no_of_subformula))
-    if t.r == 1:
-        return True
-    elif t.r == -1:
-        return False
+        nos_of_subformula += 1
 
 
 def add_to_subformula_list(formula_phi):  # add as you go any new subformula part as needed
@@ -1049,7 +838,7 @@ def add_to_variable_list(name):
         list_of_ints.append(name)
         listOfInts.append(Int(name))
     else:
-        print(name)
+        print("Already there " + name)
 
 
 def check_result():
@@ -1191,13 +980,17 @@ if __name__ == '__main__':
     formula = sys.argv[2]
     parsed_formula_initial = parser.parse(formula)
     s = Solver()
-    '''
-    x = Int('x')
-    y = Int('y')
-    # s.add(And(Or(x==0, y==1), Or(x==1, y==0)))
-    # s.add()
-    m = s.check()
-    n = s.model()
-    '''
+
+    # x = Int('x')
+    # y = Int('y')
+    # y = x
+    # for i in range(3):
+    #     y = y * x
+    # s.add(y == 16, x > 0)
+    # # s.add(And(Or(x==0, y==1), Or(x==1, y==0)))
+    # # s.add()
+    # m = s.check()
+    # n = s.model()
+
     result = main_smt_encoding(initial_model, parsed_formula_initial, formula)
     print(result)
