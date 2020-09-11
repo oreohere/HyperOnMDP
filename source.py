@@ -727,6 +727,7 @@ def check(F):  # this will take the string F, convert it to z3 compatible equati
     list_of_ints = []
     listOfInts = []
     no_of_subformula = 0
+    startt = time.process_time()
 
     for name in list_of_z3_variables:
         if name[0] == 'h':
@@ -889,6 +890,7 @@ def check(F):  # this will take the string F, convert it to z3 compatible equati
         elif F[i] == ' ':
             i += 1
     print("Finished conversion to z3format. Solving...")
+    print("Time to convert to z3 equation: " + str(time.process_time() - startt))
     starting = time.process_time()
     s = Solver()
     s.add(equation)

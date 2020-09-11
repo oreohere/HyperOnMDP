@@ -585,12 +585,10 @@ def Semantics(model, formula_duplicate, combined_list_of_states, n):
             add_to_variable_list(name)
             if li[int(ap_state) - 1] in list_of_state_with_ap:
                 and_for_yes.append(listOfBools[list_of_bools.index(name)])
-                nos_of_subformula += 1
             else:
                 and_for_no.append(Not(listOfBools[list_of_bools.index(name)]))
-                nos_of_subformula += 1
         s.add(And(And([par for par in and_for_yes]), And([par for par in and_for_no])))
-        nos_of_subformula += 1
+        nos_of_subformula += 3
         and_for_yes.clear()
         and_for_no.clear()
         print("Done with var " + str(ap_name))
@@ -613,7 +611,7 @@ def Semantics(model, formula_duplicate, combined_list_of_states, n):
             second_and = And(Not(listOfBools[list_of_bools.index(name1)]),
                              Or(Not(listOfBools[list_of_bools.index(name2)]),
                                 Not(listOfBools[list_of_bools.index(name3)])))
-            nos_of_subformula += 1
+            nos_of_subformula += 2
             s.add(Or(first_and, second_and))
             nos_of_subformula += 1
         print("Done with and")
@@ -698,7 +696,7 @@ def Semantics(model, formula_duplicate, combined_list_of_states, n):
             nos_of_subformula += 1
             s.add(Or(and_eq, and_noteq))
             nos_of_subformula += 1
-            print("Done with equal_prob")
+        print("Done with equal_prob")
     elif formula_duplicate.data == 'calc_probability':
         child = formula_duplicate.children[0]
         print("Starting probability")
@@ -770,29 +768,51 @@ def Truth(model, formula_initial, combined_list_of_states, n):
             formula_initial = formula_initial.children[1]
     index_of_phi = list_of_subformula.index(formula_initial)
     list_of_holds = []
-    list_of_eqns = []
-    if n == 2:
-        print("Starting big loop in Truth")
-        for i in range(len(combined_list_of_states)):
-            name = "holds_" + str(combined_list_of_states[i][0]) + "_" + str(combined_list_of_states[i][1]) + "_" + str(
-                index_of_phi)
-            add_to_variable_list(name)
-            list_of_holds.append(listOfBools[list_of_bools.index(name)])
 
-            if ((i + 1) == len(combined_list_of_states)) or combined_list_of_states[i][0] == \
-                    combined_list_of_states[i + 1][0] - 1:
-                if list_of_AV[1] == 'V':
-                    list_of_eqns.append(Or([par for par in list_of_holds]))
+    print("Starting big loop in Truth")
+    for i in range(len(combined_list_of_states)):
+        name = "holds_"
+        for j in range(n):
+            name += str(combined_list_of_states[i][j]) + "_"
+        name += str(index_of_phi)
+        add_to_variable_list(name)
+        list_of_holds.append(listOfBools[list_of_bools.index(name)])
+
+    list_of_holds_replace = []
+    for i in range(n - 1, -1, -1):
+        count = -1
+        limit = len(list_of_holds)
+        quo = 0
+        for j in range(limit):
+            count += 1
+            # temp_list.append(list_of_holds[limit])
+            if count == len(model.states) - 1:
+                index = quo * len(model.states)
+                if list_of_AV[i] == 'V':
+                    list_of_holds_replace.append(Or([par for par in list_of_holds[index:index + count + 1]]))
                 elif list_of_AV[1] == 'A':
-                    list_of_eqns.append(And([par for par in list_of_holds]))
-                nos_of_subformula += 1
-                list_of_holds.clear()
+                    list_of_holds_replace.append(And([par for par in list_of_holds[index:index + count + 1]]))
+                count = -1
+                quo += 1
+        list_of_holds = copy.deepcopy(list_of_holds_replace)
+        list_of_holds_replace.clear()
 
-        if list_of_AV[0] == 'V':
-            s.add(Or([par for par in list_of_eqns]))
-        elif list_of_AV[0] == 'A':
-            s.add(And([par for par in list_of_eqns]))
-        nos_of_subformula += 1
+    #     if ((i + 1) == len(combined_list_of_states)) or combined_list_of_states[i][0] == combined_list_of_states[i + 1][0] - 1:
+    #         if list_of_AV[1] == 'V':
+    #             list_of_eqns.append(Or([par for par in list_of_holds]))
+    #         elif list_of_AV[1] == 'A':
+    #             list_of_eqns.append(And([par for par in list_of_holds]))
+    #         nos_of_subformula += 1
+    #         list_of_holds.clear()
+    #
+    # if list_of_AV[0] == 'V':
+    #     s.add(Or([par for par in list_of_eqns]))
+    #     nos_of_subformula += 1
+    # elif list_of_AV[0] == 'A':
+    #     s.add(And([par for par in list_of_eqns]))
+    #     nos_of_subformula += 1
+
+    print("Truth done")
 
 
 def add_to_subformula_list(formula_phi):  # add as you go any new subformula part as needed
@@ -837,8 +857,6 @@ def add_to_variable_list(name):
     elif name[0] == 'a' and name not in list_of_ints:
         list_of_ints.append(name)
         listOfInts.append(Int(name))
-    else:
-        print("Already there " + name)
 
 
 def check_result():
@@ -880,7 +898,6 @@ def main_smt_encoding(model, formula_initial, formula):
             name = "a_" + str(state.id)  # + "=" + str(action.id)# a1 means action for state 1
             add_to_variable_list(name)
             list_of_eqns.append(listOfInts[list_of_ints.index(name)] == int(action.id))
-            nos_of_subformula += 1
         s.add(Or([par for par in list_of_eqns]))
         nos_of_subformula += 1
     n_of_state_quantifier = 0
@@ -911,8 +928,10 @@ def main_smt_encoding(model, formula_initial, formula):
     elif formula_initial.data == 'forall_scheduler':
         new_formula = ''
         i = 0
+
         first = True
         while i < len(formula):
+            jjj = formula[i]  # just to see what char we are accessing. Can be removed later.
             if formula[i] == 'E':
                 if formula[i + 1] == 'S':
                     new_formula += formula[i] + formula[i + 1]
@@ -929,7 +948,13 @@ def main_smt_encoding(model, formula_initial, formula):
                     i += 2
             else:
                 if first and formula[i - 1] == ' ' and formula[i - 2] == '.':
-                    new_formula += '~'
+                    if formula[
+                        i] == '~':  # added this to avoid double negation for exist. Might want to remove the extra brace around the formula due to previous not.
+                        first = False
+                        i += 1
+                        continue
+                    else:
+                        new_formula += '~'
                     first = False
                 new_formula += formula[i]
                 i += 1
@@ -983,10 +1008,23 @@ if __name__ == '__main__':
 
     # x = Int('x')
     # y = Int('y')
-    # y = x
-    # for i in range(3):
-    #     y = y * x
-    # s.add(y == 16, x > 0)
+    # # y = x
+    # # for i in range(3):
+    # #     y = y * x
+    #
+    # s.add(y == 16)
+    # s.add(x>0)
+    # startt = time.process_time()
+    # m = s.check()
+    # print("time = " + str(time.process_time() - startt))
+    # #n = s.model()
+    # q = Solver()
+    #
+    # q.add(And(y == 16, x > 0))
+    # startt = time.process_time()
+    # m = q.check()
+    # print("time = " + str(time.process_time() - startt))
+
     # # s.add(And(Or(x==0, y==1), Or(x==1, y==0)))
     # # s.add()
     # m = s.check()
