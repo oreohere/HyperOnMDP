@@ -569,6 +569,7 @@ def Semantics(model, formula_duplicate, combined_list_of_states, n):
         s.add(listOfBools[list_of_bools.index(name)])
         nos_of_subformula += 1
         print("Done with true")
+        return rel_quant
     elif formula_duplicate.data == 'var':  # var handles the inside varname
         list_of_state_with_ap = []
         ap_name = formula_duplicate.children[0].children[0].value
