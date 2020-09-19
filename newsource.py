@@ -556,18 +556,18 @@ def SemanticsFuture(model, formula_duplicate, combined_list_of_states, n):
 
 def Semantics(model, formula_duplicate, combined_list_of_states, n):
     global nos_of_subformula
+    r_state = [0 for ind in range(n)]
+    rel_quant = []
     if formula_duplicate.data == 'true':
         print("Starting with true")
-        list_of_holds = []
         index_of_phi = list_of_subformula.index(formula_duplicate)
-        for i in range(len(combined_list_of_states)):
-            name = "holds_" + str(combined_list_of_states[i][0]) + "_" + str(combined_list_of_states[i][1]) + "_" + str(
-                index_of_phi)
-            add_to_variable_list(name)
-            list_of_holds.append(listOfBools[list_of_bools.index(name)])
-        s.add(And([par for par in list_of_holds]))
+        name = "holds"
+        for i in r_state:
+            name += "_" + str(i)
+        name += '_' + str(index_of_phi)
+        add_to_variable_list(name)
+        s.add(listOfBools[list_of_bools.index(name)])
         nos_of_subformula += 1
-        list_of_holds.clear()
         print("Done with true")
     elif formula_duplicate.data == 'var':  # var handles the inside varname
         list_of_state_with_ap = []
@@ -797,21 +797,6 @@ def Truth(model, formula_initial, combined_list_of_states, n):
         list_of_holds = copy.deepcopy(list_of_holds_replace)
         list_of_holds_replace.clear()
 
-    #     if ((i + 1) == len(combined_list_of_states)) or combined_list_of_states[i][0] == combined_list_of_states[i + 1][0] - 1:
-    #         if list_of_AV[1] == 'V':
-    #             list_of_eqns.append(Or([par for par in list_of_holds]))
-    #         elif list_of_AV[1] == 'A':
-    #             list_of_eqns.append(And([par for par in list_of_holds]))
-    #         nos_of_subformula += 1
-    #         list_of_holds.clear()
-    #
-    # if list_of_AV[0] == 'V':
-    #     s.add(Or([par for par in list_of_eqns]))
-    #     nos_of_subformula += 1
-    # elif list_of_AV[0] == 'A':
-    #     s.add(And([par for par in list_of_eqns]))
-    #     nos_of_subformula += 1
-
     print("Truth done")
 
 
@@ -1032,3 +1017,5 @@ if __name__ == '__main__':
 
     result = main_smt_encoding(initial_model, parsed_formula_initial, formula)
     print(result)
+
+    # mdp_TS_thread_scheduler0_1 "AS sh . A s1 . A s2 . ~((h1(s1) & h2(s2)) & ~((P(F (l_1(s1) & terminated(s1))) = P(F (l_1(s2)& terminated(s2)))) & (P(F (l_2(s1)& terminated(s1))) = P(F (l_2(s2) & terminated(s2))))))"
