@@ -562,40 +562,58 @@ def Semantics(model, formula_duplicate, combined_list_of_states, n):
         print("Starting with true")
         index_of_phi = list_of_subformula.index(formula_duplicate)
         name = "holds"
-        for i in r_state:
-            name += "_" + str(i)
+        for ind in r_state:
+            name += "_" + str(ind)
         name += '_' + str(index_of_phi)
         add_to_variable_list(name)
         s.add(listOfBools[list_of_bools.index(name)])
         nos_of_subformula += 1
         print("Done with true")
         return rel_quant
+
     elif formula_duplicate.data == 'var':  # var handles the inside varname
-        list_of_state_with_ap = []
         ap_name = formula_duplicate.children[0].children[0].value
-        ap_state = formula_duplicate.children[0].children[1].value[1]
+        relevant_quantifier = int(formula_duplicate.children[0].children[1].value[1])
         labeling = model.labeling
-        and_for_yes = []
-        and_for_no = []
+        rel_quant.append(relevant_quantifier)  # n = no.of quantifier, k = no. of state in the model
+        and_for_yes = set()
+        and_for_no = set()
+        list_of_state_with_ap = []
         index_of_phi = list_of_subformula.index(formula_duplicate)
         for state in model.states:
             if ap_name in labeling.get_labels_of_state(state.id):
                 list_of_state_with_ap.append(state.id)
-        for li in combined_list_of_states:
-            name = 'holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi)
-            add_to_variable_list(name)
-            if li[int(ap_state) - 1] in list_of_state_with_ap:
-                and_for_yes.append(listOfBools[list_of_bools.index(name)])
-            else:
-                and_for_no.append(Not(listOfBools[list_of_bools.index(name)]))
-        s.add(And(And([par for par in and_for_yes]), And([par for par in and_for_no])))
+        for j in range(0, n):
+            i = n - 1
+            i_index = 0
+            while i >= 0:
+                name = 'holds'
+                for ind in r_state:
+                    name += "_" + str(ind)
+                name += '_' + str(index_of_phi)
+                add_to_variable_list(name)
+                if r_state[relevant_quantifier - 1] in list_of_state_with_ap:
+                    and_for_yes.add(listOfBools[list_of_bools.index(name)])
+                else:
+                    and_for_no.add(Not(listOfBools[list_of_bools.index(name)]))
+                while i >= 0 and (i_index == (len(model.states) - 1) or (relevant_quantifier - 1) != i):
+                    r_state[i] = 0
+                    i_index = 0
+                    i = i - 1
+                if i >= 0:
+                    i_index += 1
+                    r_state[i] = i_index
+
+        s.add(And(And([par for par in list(and_for_yes)]), And([par for par in list(and_for_no)])))
         nos_of_subformula += 3
         and_for_yes.clear()
         and_for_no.clear()
         print("Done with var " + str(ap_name))
+        return rel_quant
+
     elif formula_duplicate.data == 'and_op':
-        Semantics(model, formula_duplicate.children[0], combined_list_of_states, n)
-        Semantics(model, formula_duplicate.children[1], combined_list_of_states, n)
+        rel_quant.extend(Semantics(model, formula_duplicate.children[0], combined_list_of_states, n))
+        rel_quant.extend(Semantics(model, formula_duplicate.children[1], combined_list_of_states, n))
         index_phi = list_of_subformula.index(formula_duplicate)
         index_phi1 = list_of_subformula.index(formula_duplicate.children[0])
         index_phi2 = list_of_subformula.index(formula_duplicate.children[1])
@@ -1003,10 +1021,13 @@ if __name__ == '__main__':
     # startt = time.process_time()
     # m = s.check()
     # print("time = " + str(time.process_time() - startt))
-    # #n = s.model()
+    # n = s.model()
     # q = Solver()
     #
-    # q.add(And(y == 16, x > 0))
+    # x = Bool('x')
+    # y = Bool('y')
+    # z = Bool('z')
+    # q.add(And(And(x), Or(y, z)))
     # startt = time.process_time()
     # m = q.check()
     # print("time = " + str(time.process_time() - startt))
@@ -1014,7 +1035,7 @@ if __name__ == '__main__':
     # # s.add(And(Or(x==0, y==1), Or(x==1, y==0)))
     # # s.add()
     # m = s.check()
-    # n = s.model()
+    # n = q.model()
 
     result = main_smt_encoding(initial_model, parsed_formula_initial, formula)
     print(result)
