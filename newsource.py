@@ -626,7 +626,6 @@ def Semantics(model, formula_duplicate, combined_list_of_states, n):
         for j in range(0, n):
             index.append(0)
         i = n - 1
-        # i_index = 0
         flag = False
         while i >= 0:
             name1 = 'holds'
@@ -683,21 +682,57 @@ def Semantics(model, formula_duplicate, combined_list_of_states, n):
 
     elif formula_duplicate.data == 'neg_op':
         print("Starting with neg")
-        Semantics(model, formula_duplicate.children[0], combined_list_of_states, n)
-        index_phi = list_of_subformula.index(formula_duplicate)
-        index_phi1 = list_of_subformula.index(formula_duplicate.children[0])
-        list_of_xors = []
-        for li in combined_list_of_states:
-            name1 = 'holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_phi)
+        rel_quant.extend(Semantics(model, formula_duplicate.children[0], combined_list_of_states, n))
+        index_of_phi = list_of_subformula.index(formula_duplicate)
+        index_of_phi1 = list_of_subformula.index(formula_duplicate.children[0])
+
+        index = []
+        for j in range(0, n):
+            index.append(0)
+        i = n - 1
+        flag = False
+        while i >= 0:
+            name1 = 'holds'
+            for ind in r_state:
+                name1 += "_" + str(ind)
+            name1 += '_' + str(index_of_phi)
             add_to_variable_list(name1)
-            name2 = 'holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_phi1)
+            name2 = 'holds'
+            for ind in r_state:
+                name2 += "_" + str(ind)
+            name2 += '_' + str(index_of_phi1)
             add_to_variable_list(name2)
-            list_of_xors.append(Xor(listOfBools[list_of_bools.index(name1)], listOfBools[list_of_bools.index(name2)]))
+            # xor_pair = Xor(listOfBools[list_of_bools.index(name1)], listOfBools[list_of_bools.index(name2)])
+            s.add(Xor(listOfBools[list_of_bools.index(name1)], listOfBools[list_of_bools.index(name2)]))
             nos_of_subformula += 1
-        s.add(And([par for par in list_of_xors]))
-        nos_of_subformula += 1
+            while i >= 0 and (index[i] == (len(model.states) - 1) or (i + 1) not in rel_quant):
+                r_state[i] = 0
+                index[i] = 0
+                k = i - 1
+                flago = False
+                while k >= 0:
+                    if k + 1 in rel_quant:
+                        flago = True
+                        break
+                    else:
+                        k -= 1
+                if flago and (i + 1) in rel_quant and (k) >= 0 and index[k] < (len(
+                        model.states) - 1):  # special case when the current quantifier is relevant but it has reached the end of model states. SO we increase the previous quantifier value and continue with current quantifier
+                    index[i - 1] += 1
+                    r_state[i - 1] += 1
+                    flag = True
+                else:
+                    i = i - 1
+            if flag:
+                flag = False
+                continue
+            if i >= 0:
+                index[i] += 1
+                r_state[i] = index[i]
         print("Done with neg")
-    elif formula_duplicate.data == 'less_prob':
+        return rel_quant
+
+    elif formula_duplicate.data == 'less_prob':  # yet to be optimized
         Semantics(model, formula_duplicate.children[0], combined_list_of_states, n)
         Semantics(model, formula_duplicate.children[1], combined_list_of_states, n)
         index_phi = list_of_subformula.index(formula_duplicate)
@@ -719,7 +754,7 @@ def Semantics(model, formula_duplicate, combined_list_of_states, n):
             s.add(Or(and_less, and_greateq))
             nos_of_subformula += 1
         print("Done with less_prob")
-    elif formula_duplicate.data == 'greater_prob':
+    elif formula_duplicate.data == 'greater_prob':  # yet to be optimized
         Semantics(model, formula_duplicate.children[0], combined_list_of_states, n)
         Semantics(model, formula_duplicate.children[1], combined_list_of_states, n)
         index_phi = list_of_subformula.index(formula_duplicate)
