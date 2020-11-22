@@ -461,13 +461,16 @@ def SemanticsNext(model, formula_duplicate, combined_list_of_states, n):
     return result_string
 
 
-def SemanticsFuture(model, formula_duplicate, combined_list_of_states, n):
+# most probably we can get rid of the whole combined_list_of_states
+def SemanticsFuture(model, formula_duplicate, n):
     global nos_of_subformula
     print("Starting future")
-    phi2 = formula_duplicate.children[0].children[0]
-    index_of_phi2 = list_of_subformula.index(phi2)
+    rel_quant = []
+    phi1 = formula_duplicate.children[0].children[0]
+    index_of_phi1 = list_of_subformula.index(phi1)
     index_of_phi = list_of_subformula.index(formula_duplicate)
-    Semantics(model, phi2, combined_list_of_states, n)
+    rel_quant.extend(Semantics(model, phi1, n))
+    r_state = [0 for ind in range(n)]
 
     dict_of_acts = dict()
     dict_of_acts_tran = dict()
@@ -483,20 +486,32 @@ def SemanticsFuture(model, formula_duplicate, combined_list_of_states, n):
 
     print("In future , staring line 4 of algo")
 
-    for li in combined_list_of_states:
-        name1 = 'holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi2)
+    # implement the extra logic here instead of the one below, then check for actions of that state and do the
+    # actions thing          n = no.of quantifier, k = no. of state in the model
+    index = []
+    for j in range(0, n):
+        index.append(0)
+    i = n - 1
+    flag = False
+    while i >= 0:
+        name1 = 'holds'
+        str_r_state = ""
+        for ind in r_state:
+            str_r_state += "_" + str(ind)
+        name1 += str_r_state + "_" + str(index_of_phi1)
         add_to_variable_list(name1)
-        name2 = 'prob_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi)
+        name2 = 'prob'
+        name2 += str_r_state + '_' + str(index_of_phi)
         add_to_variable_list(name2)
         first_implies = Implies(listOfBools[list_of_bools.index(name1)],
                                 (listOfReals[list_of_reals.index(name2)] == float(1)))
-        nos_of_subformula += 2
-        new_prob_const = listOfReals[list_of_reals.index(name2)] >= float(0)
         nos_of_subformula += 1
-        s.add(And(first_implies, new_prob_const))
-        nos_of_subformula += 1
+        s.add(first_implies)
+        dicts = []
+        for i in rel_quant:
+            dicts.append(dict_of_acts[r_state[i - 1]])
+        combined_acts = list(itertools.product(*dicts))
 
-        combined_acts = list(itertools.product(dict_of_acts[li[0]], dict_of_acts[li[1]]))
         for ca in combined_acts:
             name_0 = 'a_' + str(li[0])
             add_to_variable_list(name_0)
@@ -551,59 +566,101 @@ def SemanticsFuture(model, formula_duplicate, combined_list_of_states, n):
             nos_of_subformula += 1
             s.add(Implies(implies_precedent, implies_antecedent))
             nos_of_subformula += 1
+
     print("Done with future")
+    return rel_quant
 
 
-def Semantics(model, formula_duplicate, combined_list_of_states, n):
+def Semantics(model, formula_duplicate, n):
     global nos_of_subformula
+    r_state = [0 for ind in range(n)]
+    rel_quant = []
     if formula_duplicate.data == 'true':
         print("Starting with true")
-        list_of_holds = []
         index_of_phi = list_of_subformula.index(formula_duplicate)
-        for i in range(len(combined_list_of_states)):
-            name = "holds_" + str(combined_list_of_states[i][0]) + "_" + str(combined_list_of_states[i][1]) + "_" + str(
-                index_of_phi)
-            add_to_variable_list(name)
-            list_of_holds.append(listOfBools[list_of_bools.index(name)])
-        s.add(And([par for par in list_of_holds]))
+        name = "holds"
+        for ind in r_state:
+            name += "_" + str(ind)
+        name += '_' + str(index_of_phi)
+        add_to_variable_list(name)
+        s.add(listOfBools[list_of_bools.index(name)])
         nos_of_subformula += 1
-        list_of_holds.clear()
         print("Done with true")
+        return rel_quant
+
     elif formula_duplicate.data == 'var':  # var handles the inside varname
-        list_of_state_with_ap = []
         ap_name = formula_duplicate.children[0].children[0].value
-        ap_state = formula_duplicate.children[0].children[1].value[1]
+        relevant_quantifier = int(formula_duplicate.children[0].children[1].value[1])
         labeling = model.labeling
-        and_for_yes = []
-        and_for_no = []
+        rel_quant.append(relevant_quantifier)  # n = no.of quantifier, k = no. of state in the model
+        and_for_yes = set()
+        and_for_no = set()
+        list_of_state_with_ap = []
+        index = []
         index_of_phi = list_of_subformula.index(formula_duplicate)
         for state in model.states:
             if ap_name in labeling.get_labels_of_state(state.id):
                 list_of_state_with_ap.append(state.id)
-        for li in combined_list_of_states:
-            name = 'holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_of_phi)
+        for j in range(0, n):
+            index.append(0)
+        i = n - 1
+        # index[i] = 0
+        while i >= 0:
+            name = 'holds'
+            for ind in r_state:
+                name += "_" + str(ind)
+            name += '_' + str(index_of_phi)
             add_to_variable_list(name)
-            if li[int(ap_state) - 1] in list_of_state_with_ap:
-                and_for_yes.append(listOfBools[list_of_bools.index(name)])
+            if r_state[relevant_quantifier - 1] in list_of_state_with_ap:
+                and_for_yes.add(listOfBools[list_of_bools.index(name)])
             else:
-                and_for_no.append(Not(listOfBools[list_of_bools.index(name)]))
-        s.add(And(And([par for par in and_for_yes]), And([par for par in and_for_no])))
+                and_for_no.add(Not(listOfBools[list_of_bools.index(name)]))
+            while i >= 0 and (index[i] == (len(model.states) - 1) or (relevant_quantifier - 1) != i):
+                r_state[i] = 0
+                index[i] = 0
+                i = i - 1
+            if i >= 0:
+                index[i] += 1
+                r_state[i] = index[i]
+
+        s.add(And(And([par for par in list(and_for_yes)]), And([par for par in list(and_for_no)])))
         nos_of_subformula += 3
         and_for_yes.clear()
         and_for_no.clear()
+        index.clear()
         print("Done with var " + str(ap_name))
+        return rel_quant
+
     elif formula_duplicate.data == 'and_op':
-        Semantics(model, formula_duplicate.children[0], combined_list_of_states, n)
-        Semantics(model, formula_duplicate.children[1], combined_list_of_states, n)
-        index_phi = list_of_subformula.index(formula_duplicate)
-        index_phi1 = list_of_subformula.index(formula_duplicate.children[0])
-        index_phi2 = list_of_subformula.index(formula_duplicate.children[1])
-        for li in combined_list_of_states:
-            name1 = 'holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_phi)
+        rel_quant.extend(Semantics(model, formula_duplicate.children[0], n))
+        rel_quant.extend(Semantics(model, formula_duplicate.children[1], n))
+        tmp_set = set(rel_quant)
+        rel_quant = list(tmp_set)
+        # rel_quant[1] = 1
+        index_of_phi = list_of_subformula.index(formula_duplicate)
+        index_of_phi1 = list_of_subformula.index(formula_duplicate.children[0])
+        index_of_phi2 = list_of_subformula.index(formula_duplicate.children[1])
+        # n = no.of quantifier, k = no. of state in the model
+        index = []
+        for j in range(0, n):
+            index.append(0)
+        i = n - 1
+        flag = False
+        while i >= 0:
+            name1 = 'holds'
+            for ind in r_state:
+                name1 += "_" + str(ind)
+            name1 += '_' + str(index_of_phi)
             add_to_variable_list(name1)
-            name2 = 'holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_phi1)
+            name2 = 'holds'
+            for ind in r_state:
+                name2 += "_" + str(ind)
+            name2 += '_' + str(index_of_phi1)
             add_to_variable_list(name2)
-            name3 = 'holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_phi2)
+            name3 = 'holds'
+            for ind in r_state:
+                name3 += "_" + str(ind)
+            name3 += '_' + str(index_of_phi2)
             add_to_variable_list(name3)
             first_and = And(listOfBools[list_of_bools.index(name1)], listOfBools[list_of_bools.index(name2)],
                             listOfBools[list_of_bools.index(name3)])
@@ -611,27 +668,90 @@ def Semantics(model, formula_duplicate, combined_list_of_states, n):
             second_and = And(Not(listOfBools[list_of_bools.index(name1)]),
                              Or(Not(listOfBools[list_of_bools.index(name2)]),
                                 Not(listOfBools[list_of_bools.index(name3)])))
-            nos_of_subformula += 2
+            nos_of_subformula += 1
             s.add(Or(first_and, second_and))
             nos_of_subformula += 1
+            while i >= 0 and (index[i] == (len(model.states) - 1) or (i + 1) not in rel_quant):
+                r_state[i] = 0
+                index[i] = 0
+                k = i - 1
+                flago = False
+                while k >= 0:
+                    if k + 1 in rel_quant:
+                        flago = True
+                        break
+                    else:
+                        k -= 1
+                if flago and (i + 1) in rel_quant and (k) >= 0 and index[k] < (len(
+                        model.states) - 1):  # special case when the current quantifier is relevant but it has reached the end of model states. SO we increase the previous quantifier value and continue with current quantifier
+                    index[i - 1] += 1
+                    r_state[i - 1] += 1
+                    flag = True
+                else:
+                    i = i - 1
+            if flag:
+                flag = False
+                continue
+            if i >= 0:
+                index[i] += 1
+                r_state[i] = index[i]
+
         print("Done with and")
+        return rel_quant
+
     elif formula_duplicate.data == 'neg_op':
         print("Starting with neg")
-        Semantics(model, formula_duplicate.children[0], combined_list_of_states, n)
-        index_phi = list_of_subformula.index(formula_duplicate)
-        index_phi1 = list_of_subformula.index(formula_duplicate.children[0])
-        list_of_xors = []
-        for li in combined_list_of_states:
-            name1 = 'holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_phi)
+        rel_quant.extend(Semantics(model, formula_duplicate.children[0], n))
+        index_of_phi = list_of_subformula.index(formula_duplicate)
+        index_of_phi1 = list_of_subformula.index(formula_duplicate.children[0])
+
+        index = []
+        for j in range(0, n):
+            index.append(0)
+        i = n - 1
+        flag = False
+        while i >= 0:
+            name1 = 'holds'
+            for ind in r_state:
+                name1 += "_" + str(ind)
+            name1 += '_' + str(index_of_phi)
             add_to_variable_list(name1)
-            name2 = 'holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_phi1)
+            name2 = 'holds'
+            for ind in r_state:
+                name2 += "_" + str(ind)
+            name2 += '_' + str(index_of_phi1)
             add_to_variable_list(name2)
-            list_of_xors.append(Xor(listOfBools[list_of_bools.index(name1)], listOfBools[list_of_bools.index(name2)]))
+            # xor_pair = Xor(listOfBools[list_of_bools.index(name1)], listOfBools[list_of_bools.index(name2)])
+            s.add(Xor(listOfBools[list_of_bools.index(name1)], listOfBools[list_of_bools.index(name2)]))
             nos_of_subformula += 1
-        s.add(And([par for par in list_of_xors]))
-        nos_of_subformula += 1
+            while i >= 0 and (index[i] == (len(model.states) - 1) or (i + 1) not in rel_quant):
+                r_state[i] = 0
+                index[i] = 0
+                k = i - 1
+                flago = False
+                while k >= 0:
+                    if k + 1 in rel_quant:
+                        flago = True
+                        break
+                    else:
+                        k -= 1
+                if flago and (i + 1) in rel_quant and (k) >= 0 and index[k] < (len(
+                        model.states) - 1):  # special case when the current quantifier is relevant but it has reached the end of model states. SO we increase the previous quantifier value and continue with current quantifier
+                    index[i - 1] += 1
+                    r_state[i - 1] += 1
+                    flag = True
+                else:
+                    i = i - 1
+            if flag:
+                flag = False
+                continue
+            if i >= 0:
+                index[i] += 1
+                r_state[i] = index[i]
         print("Done with neg")
-    elif formula_duplicate.data == 'less_prob':
+        return rel_quant
+
+    elif formula_duplicate.data == 'less_prob':  # yet to be optimized
         Semantics(model, formula_duplicate.children[0], combined_list_of_states, n)
         Semantics(model, formula_duplicate.children[1], combined_list_of_states, n)
         index_phi = list_of_subformula.index(formula_duplicate)
@@ -653,7 +773,7 @@ def Semantics(model, formula_duplicate, combined_list_of_states, n):
             s.add(Or(and_less, and_greateq))
             nos_of_subformula += 1
         print("Done with less_prob")
-    elif formula_duplicate.data == 'greater_prob':
+    elif formula_duplicate.data == 'greater_prob':  # yet to be optimized
         Semantics(model, formula_duplicate.children[0], combined_list_of_states, n)
         Semantics(model, formula_duplicate.children[1], combined_list_of_states, n)
         index_phi = list_of_subformula.index(formula_duplicate)
@@ -676,27 +796,68 @@ def Semantics(model, formula_duplicate, combined_list_of_states, n):
             nos_of_subformula += 1
         print("Done with greater_prob")
     elif formula_duplicate.data == 'equal_prob':
-        Semantics(model, formula_duplicate.children[0], combined_list_of_states, n)
-        Semantics(model, formula_duplicate.children[1], combined_list_of_states, n)
-        index_phi = list_of_subformula.index(formula_duplicate)
-        index_phi1 = list_of_subformula.index(formula_duplicate.children[0])
-        index_phi2 = list_of_subformula.index(formula_duplicate.children[1])
-        for li in combined_list_of_states:
-            name1 = 'holds_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_phi)
+        rel_quant.extend(Semantics(model, formula_duplicate.children[0], n))
+        rel_quant.extend(Semantics(model, formula_duplicate.children[1], n))
+        index_of_phi = list_of_subformula.index(formula_duplicate)
+        index_of_phi1 = list_of_subformula.index(formula_duplicate.children[0])
+        index_of_phi2 = list_of_subformula.index(formula_duplicate.children[1])
+
+        index = []
+        for j in range(0, n):
+            index.append(0)
+        i = n - 1
+        flag = False
+        while i >= 0:
+            name1 = 'holds'
+            for ind in r_state:
+                name1 += "_" + str(ind)
+            name1 += '_' + str(index_of_phi)
             add_to_variable_list(name1)
-            name2 = 'prob_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_phi1)
+            name2 = 'prob'
+            for ind in r_state:
+                name2 += "_" + str(ind)
+            name2 += '_' + str(index_of_phi1)
             add_to_variable_list(name2)
-            name3 = 'prob_' + str(li[0]) + '_' + str(li[1]) + '_' + str(index_phi2)
+            name3 = 'prob'
+            for ind in r_state:
+                name3 += "_" + str(ind)
+            name3 += '_' + str(index_of_phi2)
             add_to_variable_list(name3)
             and_eq = And(listOfBools[list_of_bools.index(name1)],
                          listOfReals[list_of_reals.index(name2)] == listOfReals[list_of_reals.index(name3)])
             nos_of_subformula += 1
-            and_noteq = And(Not(listOfBools[list_of_bools.index(name1)]),
-                            listOfReals[list_of_reals.index(name2)] != listOfReals[list_of_reals.index(name3)])
+            and_not_eq = And(Not(listOfBools[list_of_bools.index(name1)]),
+                             listOfReals[list_of_reals.index(name2)] != listOfReals[list_of_reals.index(name3)])
             nos_of_subformula += 1
-            s.add(Or(and_eq, and_noteq))
+            s.add(Or(and_eq, and_not_eq))
             nos_of_subformula += 1
+            while i >= 0 and (index[i] == (len(model.states) - 1) or (i + 1) not in rel_quant):
+                r_state[i] = 0
+                index[i] = 0
+                k = i - 1
+                flago = False
+                while k >= 0:
+                    if k + 1 in rel_quant:
+                        flago = True
+                        break
+                    else:
+                        k -= 1
+                if flago and (i + 1) in rel_quant and (k) >= 0 and index[k] < (len(
+                        model.states) - 1):  # special case when the current quantifier is relevant but it has reached the end of model states. SO we increase the previous quantifier value and continue with current quantifier
+                    index[i - 1] += 1
+                    r_state[i - 1] += 1
+                    flag = True
+                else:
+                    i = i - 1
+            if flag:
+                flag = False
+                continue
+            if i >= 0:
+                index[i] += 1
+                r_state[i] = index[i]
         print("Done with equal_prob")
+        return rel_quant
+
     elif formula_duplicate.data == 'calc_probability':
         child = formula_duplicate.children[0]
         print("Starting probability")
@@ -707,14 +868,15 @@ def Semantics(model, formula_duplicate, combined_list_of_states, n):
         elif child.data == 'calc_until_bounded':
             SemanticsBoundedUntil(model, formula_duplicate, combined_list_of_states, n)
         elif child.data == 'calc_future':
-            SemanticsFuture(model, formula_duplicate, combined_list_of_states, n)
+            rel_quant.extend(SemanticsFuture(model, formula_duplicate, n))
         print("Done with probability")
+        return rel_quant
     elif formula_duplicate.data == 'calc_until_unbounded':  # might be redundant
         print("Starting until unbounded")
         SemanticsUnboundedUntil(model, formula_duplicate, combined_list_of_states, n)
     elif formula_duplicate.data == 'calc_until_bounded':
         SemanticsBoundedUntil(model, formula_duplicate, combined_list_of_states, n)
-    elif formula_duplicate.data == 'const':
+    elif formula_duplicate.data == 'const':  # yet to be optimized
         c = formula_duplicate.children[0].value
         list_of_probs = []
         for li in combined_list_of_states:
@@ -725,7 +887,7 @@ def Semantics(model, formula_duplicate, combined_list_of_states, n):
         s.add(And([par for par in list_of_probs]))
         nos_of_subformula += 1
         print("Done with constant")
-    elif formula_duplicate.data in ['add_prob', 'minus_prob', 'mul_prob']:
+    elif formula_duplicate.data in ['add_prob', 'minus_prob', 'mul_prob']:  # yet to be optimized
         left = formula_duplicate.children[0]
         index_left = list_of_subformula.index(left)
         right = formula_duplicate.children[1]
@@ -796,21 +958,6 @@ def Truth(model, formula_initial, combined_list_of_states, n):
                 quo += 1
         list_of_holds = copy.deepcopy(list_of_holds_replace)
         list_of_holds_replace.clear()
-
-    #     if ((i + 1) == len(combined_list_of_states)) or combined_list_of_states[i][0] == combined_list_of_states[i + 1][0] - 1:
-    #         if list_of_AV[1] == 'V':
-    #             list_of_eqns.append(Or([par for par in list_of_holds]))
-    #         elif list_of_AV[1] == 'A':
-    #             list_of_eqns.append(And([par for par in list_of_holds]))
-    #         nos_of_subformula += 1
-    #         list_of_holds.clear()
-    #
-    # if list_of_AV[0] == 'V':
-    #     s.add(Or([par for par in list_of_eqns]))
-    #     nos_of_subformula += 1
-    # elif list_of_AV[0] == 'A':
-    #     s.add(And([par for par in list_of_eqns]))
-    #     nos_of_subformula += 1
 
     print("Truth done")
 
@@ -916,7 +1063,7 @@ def main_smt_encoding(model, formula_initial, formula):
         print("Calling Truth...")
         Truth(model, formula_initial, combined_list_of_states, n_of_state_quantifier)
         print("Calling Semantics...")
-        Semantics(model, formula_duplicate, combined_list_of_states, n_of_state_quantifier)
+        Semantics(model, formula_duplicate, n_of_state_quantifier)
         smt_end_time = time.process_time() - starttime
         print("Time to encode: " + str(smt_end_time))
         print("Checking...")
@@ -971,7 +1118,7 @@ def main_smt_encoding(model, formula_initial, formula):
         print("Calling Truth...")
         Truth(model, new_parsed_formula, combined_list_of_states, n_of_state_quantifier)
         print("Calling Semantics...")
-        Semantics(model, formula_duplicate, combined_list_of_states, n_of_state_quantifier)
+        Semantics(model, formula_duplicate, n_of_state_quantifier)
         smt_end_time = time.process_time() - starttime
         print("Time to encode: " + str(smt_end_time))
         print("Checking...")
@@ -1017,10 +1164,13 @@ if __name__ == '__main__':
     # startt = time.process_time()
     # m = s.check()
     # print("time = " + str(time.process_time() - startt))
-    # #n = s.model()
+    # n = s.model()
     # q = Solver()
     #
-    # q.add(And(y == 16, x > 0))
+    # x = Bool('x')
+    # y = Bool('y')
+    # z = Bool('z')
+    # q.add(And(And(x), Or(y, z)))
     # startt = time.process_time()
     # m = q.check()
     # print("time = " + str(time.process_time() - startt))
@@ -1028,7 +1178,9 @@ if __name__ == '__main__':
     # # s.add(And(Or(x==0, y==1), Or(x==1, y==0)))
     # # s.add()
     # m = s.check()
-    # n = s.model()
+    # n = q.model()
 
     result = main_smt_encoding(initial_model, parsed_formula_initial, formula)
     print(result)
+
+    # mdp_TS_thread_scheduler0_1 "AS sh . A s1 . A s2 . ~((h1(s1) & h2(s2)) & ~((P(F (l_1(s1) & terminated(s1))) = P(F (l_1(s2)& terminated(s2)))) & (P(F (l_2(s1)& terminated(s1))) = P(F (l_2(s2) & terminated(s2))))))"
