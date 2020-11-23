@@ -530,16 +530,14 @@ def SemanticsFuture(model, formula_duplicate, n):
 
             dicts = []
             # rel_quant = [1,2]
+            g = 0
             for l in rel_quant:
-                dicts.append(dict_of_acts_tran[str(r_state[l - 1]) + " " + str(ca[l - 1])])
+                dicts.append(dict_of_acts_tran[str(r_state[l - 1]) + " " + str(ca[g])])
+                g += 1
             combined_succ = list(itertools.product(*dicts))
 
             first = True
-            # one = False
-            # if len(combined_succ) == 1:
-            #     one = True
             prod_left = None
-            prod_right_or = None
             list_of_ors = []
 
             for cs in combined_succ:
@@ -557,12 +555,12 @@ def SemanticsFuture(model, formula_duplicate, n):
                         prob_succ += '_' + succ_state
                         holds_succ += '_' + succ_state
                         d_succ += '_' + succ_state
-                        f += 1
                         if p_first:
                             prod_left_part = float(cs[f - 1][space + 1:])
                             p_first = False
                         else:
                             prod_left_part *= float(cs[f - 1][space + 1:])
+                        f += 1
 
                     else:
                         prob_succ += '_' + str(0)
@@ -611,25 +609,26 @@ def SemanticsFuture(model, formula_duplicate, n):
         while i >= 0 and (index[i] == (len(model.states) - 1) or (i + 1) not in rel_quant):
             r_state[i] = 0
             index[i] = 0
-            k = i - 1
-            flago = False
-            while k >= 0:
-                if k + 1 in rel_quant:
-                    flago = True
-                    break
-                else:
-                    k -= 1
-                if flago and (i + 1) in rel_quant and k >= 0 and index[k] < (len(model.states) - 1):
-                    # special case when the current quantifier is relevant but it has reached the end of model
-                    # states. SO we increase the previous quantifier value and continue with current quantifier
-                    index[i - 1] += 1
-                    r_state[i - 1] += 1
-                    flag = True
-                else:
-                    i = i - 1
-            if flag:
-                flag = False
-                continue
+            i = i - 1
+            # k = i - 1
+            # flago = False
+            # while k >= 0:
+            #     if k + 1 in rel_quant:
+            #         flago = True
+            #         break
+            #     else:
+            #         k -= 1
+            #     if flago and (i + 1) in rel_quant and k >= 0 and index[k] < (len(model.states) - 1):
+            #         # special case when the current quantifier is relevant but it has reached the end of model
+            #         # states. So we increase the previous quantifier value and continue with current quantifier
+            #         index[i - 1] += 1
+            #         r_state[i - 1] += 1
+            #         flag = True
+            #     else:
+            #         i = i - 1
+            # if flag:
+            #     flag = False
+            #     continue
 
         if i >= 0:
             index[i] = index[i] + 1
@@ -750,8 +749,9 @@ def Semantics(model, formula_duplicate, n):
                         break
                     else:
                         k -= 1
-                if flago and (i + 1) in rel_quant and (k) >= 0 and index[k] < (len(
-                        model.states) - 1):  # special case when the current quantifier is relevant but it has reached the end of model states. SO we increase the previous quantifier value and continue with current quantifier
+                if flago and (i + 1) in rel_quant and k >= 0 and index[k] < (len(model.states) - 1):  # special case
+                    # when the current quantifier is relevant but it has reached the end of model states. SO we
+                    # increase the previous quantifier value and continue with current quantifier
                     index[i - 1] += 1
                     r_state[i - 1] += 1
                     flag = True
