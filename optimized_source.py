@@ -509,6 +509,10 @@ def SemanticsFuture(model, formula_duplicate, n):
                                 (listOfReals[list_of_reals.index(prob_phi)] == float(1)))
         nos_of_subformula += 1
         s.add(first_implies)
+        new_prob_const = listOfReals[list_of_reals.index(prob_phi)] >= float(0)
+        nos_of_subformula += 1
+        s.add(And(first_implies, new_prob_const))
+        nos_of_subformula += 1
         dicts = []
         # rel_quant = [1,2]
         for l in rel_quant:
@@ -1025,6 +1029,7 @@ def Truth(model, formula_initial, combined_list_of_states, n):
                 count = -1
                 quo += 1
         list_of_holds = copy.deepcopy(list_of_holds_replace)
+        s.add(list_of_holds[0])
         list_of_holds_replace.clear()
 
     print("Truth done")
@@ -1084,10 +1089,12 @@ def check_result():
         for li in model:
             if li.name()[0] == 'h':
                 li_h[li.name()] = model[li]
+                print(str(li.name()) + '=' + str(model[li]))
         li_p = dict()
         for li in model:
             if li.name()[0] == 'p':
                 li_p[li.name()] = model[li]
+                print(str(li.name()) + '=' + str(model[li]))
         li_a = dict()
         for li in model:
             if li.name()[0] == 'a':
@@ -1163,8 +1170,9 @@ def main_smt_encoding(model, formula_initial, formula):
                     i += 2
             else:
                 if first and formula[i - 1] == ' ' and formula[i - 2] == '.':
-                    if formula[
-                        i] == '~':  # added this to avoid double negation for exist. Might want to remove the extra brace around the formula due to previous not.
+                    if formula[i] == '~':
+                        # added this to avoid double negation for exist. Might want to remove the extra brace around
+                        # the formula due to previous not.
                         first = False
                         i += 1
                         continue

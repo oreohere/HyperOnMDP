@@ -574,6 +574,7 @@ def Semantics(model, formula_duplicate, combined_list_of_states, n):
         and_for_no = []
         index_of_phi = list_of_subformula.index(formula_duplicate)
         for state in model.states:
+            zzzzz = labeling.get_labels_of_state(state.id)
             if ap_name in labeling.get_labels_of_state(state.id):
                 list_of_state_with_ap.append(state.id)
         for li in combined_list_of_states:
@@ -791,6 +792,7 @@ def Truth(model, formula_initial, combined_list_of_states, n):
                 count = -1
                 quo += 1
         list_of_holds = copy.deepcopy(list_of_holds_replace)
+        s.add(list_of_holds[0])
         list_of_holds_replace.clear()
 
     #     if ((i + 1) == len(combined_list_of_states)) or combined_list_of_states[i][0] == combined_list_of_states[i + 1][0] - 1:
@@ -865,15 +867,22 @@ def check_result():
         for li in model:
             if li.name()[0] == 'h':
                 li_h[li.name()] = model[li]
+                print(str(li.name()) + ' = ' + str(model[li]))
         li_p = dict()
         for li in model:
             if li.name()[0] == 'p':
                 li_p[li.name()] = model[li]
+                print(str(li.name()) + ' = ' + str(model[li]))
+        li_d = dict()
+        for li in model:
+            if li.name()[0] == 'd':
+                li_d[li.name()] = model[li]
+                print(str(li.name()) + ' = ' + str(model[li]))
         li_a = dict()
         for li in model:
             if li.name()[0] == 'a':
                 li_a[li.name()] = model[li]
-                print(str(li.name()) + '=' + str(model[li]))
+                print(str(li.name()) + ' = ' + str(model[li]))
     print(s.statistics())
     print("\n")
     print("Number of variables: " + str(len(list_of_ints) + len(list_of_reals) + len(list_of_bools)))
@@ -1028,3 +1037,6 @@ if __name__ == '__main__':
 
     result = main_smt_encoding(initial_model, parsed_formula_initial, formula)
     print(result)
+
+# mdp_PC_synthesis
+# "ES sh . A s1 . E s2 . ~((start1(s1) & start2(s2)) & ~((P(F die1(s1)) = P(F die1(s2))) & ((P(F die2(s1)) = P(F die2(s2))) & ((P(F die3(s1)) = P(F die3(s2))) & ((P(F die4(s1)) = P(F die4(s2))) & ((P(F die5(s1)) = P(F die5(s2))) & (P(F die6(s1)) = P(F die6(s2))) ) ) ) ) ) )"
