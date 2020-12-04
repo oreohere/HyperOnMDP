@@ -520,7 +520,7 @@ def SemanticsFuture(model, formula_duplicate, n):
         combined_acts = list(itertools.product(*dicts))
 
         for ca in combined_acts:
-            name = 'a_' + str(rel_quant[0] - 1)
+            name = 'a_' + str(r_state[rel_quant[0] - 1])
             add_to_variable_list(name)
             act_str = listOfInts[list_of_ints.index(name)] == int(ca[0])
             if len(rel_quant) > 1:
@@ -693,7 +693,7 @@ def Semantics(model, formula_duplicate, n):
             if i >= 0:
                 index[i] += 1
                 r_state[i] = index[i]
-
+        zz = And(And([par for par in list(and_for_yes)]), And([par for par in list(and_for_no)]))
         s.add(And(And([par for par in list(and_for_yes)]), And([par for par in list(and_for_no)])))
         nos_of_subformula += 3
         and_for_yes.clear()
@@ -1258,5 +1258,3 @@ if __name__ == '__main__':
 
     result = main_smt_encoding(initial_model, parsed_formula_initial, formula)
     print(result)
-
-    # mdp_TS_thread_scheduler0_1 "AS sh . A s1 . A s2 . ~((h1(s1) & h2(s2)) & ~((P(F (l_1(s1) & terminated(s1))) = P(F (l_1(s2)& terminated(s2)))) & (P(F (l_2(s1)& terminated(s1))) = P(F (l_2(s2) & terminated(s2))))))"
