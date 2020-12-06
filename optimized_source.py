@@ -463,7 +463,7 @@ def SemanticsNext(model, formula_duplicate, combined_list_of_states, n):
 
 # most probably we can get rid of the whole combined_list_of_states
 
-# getting into an infinite loop somewhere. CORRECT IT
+#
 def SemanticsFuture(model, formula_duplicate, n):
     global nos_of_subformula
     print("Starting future")
@@ -868,8 +868,10 @@ def Semantics(model, formula_duplicate, n):
             nos_of_subformula += 1
         print("Done with greater_prob")
     elif formula_duplicate.data == 'equal_prob':
-        rel_quant.extend(Semantics(model, formula_duplicate.children[0], n))
-        rel_quant.extend(Semantics(model, formula_duplicate.children[1], n))
+        rel_quant1 = Semantics(model, formula_duplicate.children[0], n)
+        rel_quant2 = Semantics(model, formula_duplicate.children[1], n)
+        rel_quant.extend(rel_quant1)
+        rel_quant.extend(rel_quant2)
         index_of_phi = list_of_subformula.index(formula_duplicate)
         index_of_phi1 = list_of_subformula.index(formula_duplicate.children[0])
         index_of_phi2 = list_of_subformula.index(formula_duplicate.children[1])
