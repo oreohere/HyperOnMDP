@@ -38,7 +38,7 @@ endmodule
 init  (s=0)&(die=0)  endinit
 
 label "start1" = (s=0)&(die=0)&(f=0);
-label "start2" = (s=0)&(die=0)&(f=1);  //
+label "start2" = (s=0)&(die=0)&(f=1);
 
 label "die1" = (die=1);
 label "die2" = (die=2);

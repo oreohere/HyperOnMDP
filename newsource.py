@@ -787,13 +787,13 @@ def Truth(model, formula_initial, combined_list_of_states, n):
                 index = quo * len(model.states)
                 if list_of_AV[i] == 'V':
                     list_of_holds_replace.append(Or([par for par in list_of_holds[index:index + count + 1]]))
-                elif list_of_AV[1] == 'A':
+                elif list_of_AV[i] == 'A':
                     list_of_holds_replace.append(And([par for par in list_of_holds[index:index + count + 1]]))
                 count = -1
                 quo += 1
         list_of_holds = copy.deepcopy(list_of_holds_replace)
-        s.add(list_of_holds[0])
         list_of_holds_replace.clear()
+    s.add(list_of_holds[0])
 
     #     if ((i + 1) == len(combined_list_of_states)) or combined_list_of_states[i][0] == combined_list_of_states[i + 1][0] - 1:
     #         if list_of_AV[1] == 'V':
