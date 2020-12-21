@@ -703,8 +703,10 @@ def Semantics(model, formula_duplicate, n):
         return rel_quant
 
     elif formula_duplicate.data == 'and_op':
-        rel_quant.extend(Semantics(model, formula_duplicate.children[0], n))
-        rel_quant.extend(Semantics(model, formula_duplicate.children[1], n))
+        rel_quant1 = Semantics(model, formula_duplicate.children[0], n)
+        rel_quant.extend(rel_quant1)
+        rel_quant2 = Semantics(model, formula_duplicate.children[1], n)
+        rel_quant.extend(rel_quant2)
         tmp_set = set(rel_quant)
         rel_quant = list(tmp_set)
         # rel_quant[1] = 1
@@ -724,13 +726,19 @@ def Semantics(model, formula_duplicate, n):
             name1 += '_' + str(index_of_phi)
             add_to_variable_list(name1)
             name2 = 'holds'
-            for ind in r_state:
-                name2 += "_" + str(ind)
+            for ind in range(0, len(r_state)):
+                if (ind + 1) in rel_quant1:
+                    name2 += "_" + str(r_state[ind])
+                else:
+                    name2 += "_" + str(0)
             name2 += '_' + str(index_of_phi1)
             add_to_variable_list(name2)
             name3 = 'holds'
-            for ind in r_state:
-                name3 += "_" + str(ind)
+            for ind in range(0, len(r_state)):
+                if (ind + 1) in rel_quant2:
+                    name3 += "_" + str(r_state[ind])
+                else:
+                    name3 += "_" + str(0)
             name3 += '_' + str(index_of_phi2)
             add_to_variable_list(name3)
             first_and = And(listOfBools[list_of_bools.index(name1)], listOfBools[list_of_bools.index(name2)],
@@ -754,7 +762,7 @@ def Semantics(model, formula_duplicate, n):
                     else:
                         k -= 1
                 if flago and (i + 1) in rel_quant and k >= 0 and index[k] < (len(model.states) - 1):  # special case
-                    # when the current quantifier is relevant but it has reached the end of model states. SO we
+                    # when the current quantifier is relevant but it has reached the end of model states. So we
                     # increase the previous quantifier value and continue with current quantifier
                     index[i - 1] += 1
                     r_state[i - 1] += 1
@@ -888,13 +896,19 @@ def Semantics(model, formula_duplicate, n):
             name1 += '_' + str(index_of_phi)
             add_to_variable_list(name1)
             name2 = 'prob'
-            for ind in r_state:
-                name2 += "_" + str(ind)
+            for ind in range(0, len(r_state)):
+                if (ind + 1) in rel_quant1:
+                    name2 += "_" + str(r_state[ind])
+                else:
+                    name2 += "_" + str(0)
             name2 += '_' + str(index_of_phi1)
             add_to_variable_list(name2)
             name3 = 'prob'
-            for ind in r_state:
-                name3 += "_" + str(ind)
+            for ind in range(0, len(r_state)):
+                if (ind + 1) in rel_quant2:
+                    name3 += "_" + str(r_state[ind])
+                else:
+                    name3 += "_" + str(0)
             name3 += '_' + str(index_of_phi2)
             add_to_variable_list(name3)
             and_eq = And(listOfBools[list_of_bools.index(name1)],
@@ -1026,13 +1040,13 @@ def Truth(model, formula_initial, combined_list_of_states, n):
                 index = quo * len(model.states)
                 if list_of_AV[i] == 'V':
                     list_of_holds_replace.append(Or([par for par in list_of_holds[index:index + count + 1]]))
-                elif list_of_AV[1] == 'A':
+                elif list_of_AV[i] == 'A':
                     list_of_holds_replace.append(And([par for par in list_of_holds[index:index + count + 1]]))
                 count = -1
                 quo += 1
         list_of_holds = copy.deepcopy(list_of_holds_replace)
-        s.add(list_of_holds[0])
         list_of_holds_replace.clear()
+    s.add(list_of_holds[0])
 
     print("Truth done")
 
