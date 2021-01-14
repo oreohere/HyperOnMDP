@@ -487,7 +487,6 @@ def SemanticsFuture(model, formula_duplicate, n):
         dict_of_acts[state.id] = list_of_act
 
     print("In future , starting line 4 of algo")
-    f_pointer.write("Future :\n")
 
     # implement the extra logic here instead of the one below, then check for actions of that state and do the
     # actions thing          n = no.of quantifier, k = no. of state in the model
@@ -506,22 +505,12 @@ def SemanticsFuture(model, formula_duplicate, n):
         prob_phi = 'prob'
         prob_phi += str_r_state + '_' + str(index_of_phi)
         add_to_variable_list(prob_phi)
-        # new_prob_const = And(listOfReals[list_of_reals.index(prob_phi)] < float(1), listOfReals[list_of_reals.index(prob_phi)] >= float(0))
         new_prob_const = listOfReals[list_of_reals.index(prob_phi)] >= float(0)
-        # nos_of_subformula += 1
-        # s.add(new_prob_const)
-        # # nos_of_subformula += 1
-        # f_pointer.write(str(new_prob_const))
-        # f_pointer.write("\n")
         first_implies = And(Implies(listOfBools[list_of_bools.index(holds1)],
                                     (listOfReals[list_of_reals.index(prob_phi)] == float(1))), new_prob_const)
         nos_of_subformula += 1
-        # s.add(first_implies)
-        # new_prob_const = Implies(Not(listOfBools[list_of_bools.index(holds1)]),
 
-        # f_pointer.write("\n")
         dicts = []
-        # rel_quant = [1,2]
         for l in rel_quant:
             dicts.append(dict_of_acts[r_state[l - 1]])
         combined_acts = list(itertools.product(*dicts))
@@ -540,7 +529,6 @@ def SemanticsFuture(model, formula_duplicate, n):
             nos_of_subformula += 2
 
             dicts = []
-            # rel_quant = [1,2]
             g = 0
             for l in rel_quant:
                 dicts.append(dict_of_acts_tran[str(r_state[l - 1]) + " " + str(ca[g])])
@@ -625,32 +613,11 @@ def SemanticsFuture(model, formula_duplicate, n):
             nos_of_subformula += 1
             s.add(And(first_implies, Implies(implies_precedent, implies_antecedent)))
             nos_of_subformula += 1
-            f_pointer.write(str(And(first_implies, Implies(implies_precedent, implies_antecedent))))
-            f_pointer.write("\n")
 
         while i >= 0 and (index[i] == (len(model.states) - 1) or (i + 1) not in rel_quant):
             r_state[i] = 0
             index[i] = 0
             i = i - 1
-            # k = i - 1
-            # flago = False
-            # while k >= 0:
-            #     if k + 1 in rel_quant:
-            #         flago = True
-            #         break
-            #     else:
-            #         k -= 1
-            #     if flago and (i + 1) in rel_quant and k >= 0 and index[k] < (len(model.states) - 1):
-            #         # special case when the current quantifier is relevant but it has reached the end of model
-            #         # states. So we increase the previous quantifier value and continue with current quantifier
-            #         index[i - 1] += 1
-            #         r_state[i - 1] += 1
-            #         flag = True
-            #     else:
-            #         i = i - 1
-            # if flag:
-            #     flag = False
-            #     continue
 
         if i >= 0:
             index[i] = index[i] + 1
@@ -693,7 +660,6 @@ def Semantics(model, formula_duplicate, n):
         for j in range(0, n):
             index.append(0)
         i = n - 1
-        # index[i] = 0
         while i >= 0:
             name = 'holds'
             for ind in r_state:
@@ -711,11 +677,7 @@ def Semantics(model, formula_duplicate, n):
             if i >= 0:
                 index[i] += 1
                 r_state[i] = index[i]
-        zz = And(And([par for par in list(and_for_yes)]), And([par for par in list(and_for_no)]))
         s.add(And(And([par for par in list(and_for_yes)]), And([par for par in list(and_for_no)])))
-        f_pointer.write("Variable : " + str(ap_name) + "\n")
-        f_pointer.write(str(zz))
-        f_pointer.write("\n")
         nos_of_subformula += 3
         and_for_yes.clear()
         and_for_no.clear()
@@ -730,7 +692,6 @@ def Semantics(model, formula_duplicate, n):
         rel_quant.extend(rel_quant2)
         tmp_set = set(rel_quant)
         rel_quant = list(tmp_set)
-        # rel_quant[1] = 1
         index_of_phi = list_of_subformula.index(formula_duplicate)
         index_of_phi1 = list_of_subformula.index(formula_duplicate.children[0])
         index_of_phi2 = list_of_subformula.index(formula_duplicate.children[1])
@@ -740,7 +701,6 @@ def Semantics(model, formula_duplicate, n):
             index.append(0)
         i = n - 1
         flag = False
-        f_pointer.write("And :\n")
         while i >= 0:
             name1 = 'holds'
             for ind in r_state:
@@ -771,9 +731,6 @@ def Semantics(model, formula_duplicate, n):
                                 Not(listOfBools[list_of_bools.index(name3)])))
             nos_of_subformula += 1
             s.add(Or(first_and, second_and))
-
-            f_pointer.write(str(Or(first_and, second_and)))
-            f_pointer.write("\n")
             nos_of_subformula += 1
             while i >= 0 and (index[i] == (len(model.states) - 1) or (i + 1) not in rel_quant):
                 r_state[i] = 0
@@ -826,11 +783,7 @@ def Semantics(model, formula_duplicate, n):
                 name2 += "_" + str(ind)
             name2 += '_' + str(index_of_phi1)
             add_to_variable_list(name2)
-            # xor_pair = Xor(listOfBools[list_of_bools.index(name1)], listOfBools[list_of_bools.index(name2)])
             s.add(Xor(listOfBools[list_of_bools.index(name1)], listOfBools[list_of_bools.index(name2)]))
-            f_pointer.write("Negation :\n")
-            f_pointer.write(str(Xor(listOfBools[list_of_bools.index(name1)], listOfBools[list_of_bools.index(name2)])))
-            f_pointer.write("\n")
             nos_of_subformula += 1
             while i >= 0 and (index[i] == (len(model.states) - 1) or (i + 1) not in rel_quant):
                 r_state[i] = 0
@@ -917,7 +870,6 @@ def Semantics(model, formula_duplicate, n):
             index.append(0)
         i = n - 1
         flag = False
-        f_pointer.write("Equal probability :\n")
         while i >= 0:
             name1 = 'holds'
             for ind in r_state:
@@ -949,8 +901,6 @@ def Semantics(model, formula_duplicate, n):
             s.add(Or(and_eq, and_not_eq))
             nos_of_subformula += 1
 
-            f_pointer.write(str(Or(and_eq, and_not_eq)))
-            f_pointer.write("\n")
             while i >= 0 and (index[i] == (len(model.states) - 1) or (i + 1) not in rel_quant):
                 r_state[i] = 0
                 index[i] = 0
@@ -1038,7 +988,6 @@ def Semantics(model, formula_duplicate, n):
 def Truth(model, formula_initial, combined_list_of_states, n):
     global nos_of_subformula
     list_of_AV = []  # will have the OR, AND according to the quantifier in that index in the formula
-    f_pointer.write("Truth :\n")
 
     while len(formula_initial.children) > 0 and type(formula_initial.children[0]) == Token:
         if formula_initial.data in ['exist_scheduler', 'forall_scheduler']:
@@ -1079,8 +1028,6 @@ def Truth(model, formula_initial, combined_list_of_states, n):
                 quo += 1
         list_of_holds = copy.deepcopy(list_of_holds_replace)
         list_of_holds_replace.clear()
-        f_pointer.write(str(list_of_holds))
-        f_pointer.write("\n")
     s.add(list_of_holds[0])
 
     print("Truth done")
@@ -1170,7 +1117,6 @@ def main_smt_encoding(model, formula_initial, formula):
     global nos_of_subformula
     list_of_states = []
     starttime = time.process_time()
-    f_pointer.write("Actions :\n")
     for state in model.states:
         list_of_eqns = []
         name = "a_" + str(state.id)  # a_1 means action for state 1
@@ -1179,13 +1125,9 @@ def main_smt_encoding(model, formula_initial, formula):
             list_of_eqns.append(listOfInts[list_of_ints.index(name)] == int(action.id))
         if len(list_of_eqns) == 1:
             s.add(list_of_eqns[0])
-            f_pointer.write(str(list_of_eqns[0]))
         else:
             s.add(Or([par for par in list_of_eqns]))
-            f_pointer.write(str(Or([par for par in list_of_eqns])))
         nos_of_subformula += 1
-
-        f_pointer.write("\n")
     n_of_state_quantifier = 0
     formula_duplicate = formula_initial
     while len(formula_duplicate.children) > 0 and type(formula_duplicate.children[0]) == Token:
@@ -1203,21 +1145,6 @@ def main_smt_encoding(model, formula_initial, formula):
         Truth(model, formula_initial, combined_list_of_states, n_of_state_quantifier)
         print("Calling Semantics...")
         Semantics(model, formula_duplicate, n_of_state_quantifier)
-        # s.add(listOfReals[list_of_reals.index('prob_0_0_8')] == listOfReals[list_of_reals.index('prob_0_1_11')])
-        # f_pointer.write(str(listOfReals[list_of_reals.index('prob_0_0_8')] == listOfReals[list_of_reals.index('prob_0_1_11')]))
-        # f_pointer.write("\n")
-        # s.add(listOfReals[list_of_reals.index('d_0_1_12')] == 1)
-        # f_pointer.write(str(listOfReals[list_of_reals.index('d_0_1_12')] == 1))
-        # f_pointer.write("\n")
-        # s.add(listOfReals[list_of_reals.index('d_0_4_12')] == 0.6)
-        # f_pointer.write(str(listOfReals[list_of_reals.index('d_0_4_12')] == 0.6))
-        # f_pointer.write("\n")
-        # s.add(listOfReals[list_of_reals.index('d_0_5_12')] == 0.4)
-        # f_pointer.write(str(listOfReals[list_of_reals.index('d_0_5_12')] == 0.4))
-        # f_pointer.write("\n")
-        # s.add(listOfReals[list_of_reals.index('d_0_3_12')] == 2)
-        # f_pointer.write(str(listOfReals[list_of_reals.index('d_0_3_12')] == 2))
-        # f_pointer.write("\n")
         smt_end_time = time.process_time() - starttime
         print("Time to encode: " + str(smt_end_time))
         print("Checking...")
@@ -3644,34 +3571,5 @@ if __name__ == '__main__':
     parsed_formula_initial = parser.parse(formula)
     s = Solver()
 
-    # x = Int('x')
-    # y = Int('y')
-    # # y = x
-    # # for i in range(3):
-    # #     y = y * x
-    #
-    # s.add(y == 16)
-    # s.add(x>0)
-    # startt = time.process_time()
-    # m = s.check()
-    # print("time = " + str(time.process_time() - startt))
-    # n = s.model()
-    # q = Solver()
-    #
-    # x = Bool('x')
-    # y = Bool('y')
-    # z = Bool('z')
-    # q.add(And(And(x), Or(y, z)))
-    # startt = time.process_time()
-    # m = q.check()
-    # print("time = " + str(time.process_time() - startt))
-
-    # # s.add(And(Or(x==0, y==1), Or(x==1, y==0)))
-    # # s.add()
-    # m = s.check()
-    # n = q.model()
-
-    f_pointer = open("encoding.txt", "w")
     result = main_smt_encoding(initial_model, parsed_formula_initial, formula)
-    f_pointer.close()
     print(result)
